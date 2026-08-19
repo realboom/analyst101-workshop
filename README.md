@@ -13,6 +13,10 @@ Two halves, one dataset:
    pre-built star schema, so they see governed tables turn into interactive analytics and
    plain-language Q&A.
 
+An optional **[advanced module](advanced_module/)** (Metric Views, SQL functions, trusted assets
+for Genie) runs on the *same* shared dataset — designed so a follow-on **Databricks Day / advanced
+session** reuses exactly the data analysts built in the workshop. One dataset, two sessions.
+
 > This template started from Kiara Koeppen's excellent SelectHealth AI/BI workshop
 > (`kiara-koeppen/selecthealth-aibi-workshop`) — the synthetic dataset, starter dashboard, Genie
 > config, and AI/BI lab guides are hers. This version generalizes it into a reusable Analyst 101 and
@@ -32,15 +36,20 @@ facilities_raw.csv ──upload──► UC Volume ──Lakeflow Designer──
    (messy source extract)      ({{CATALOG}}.analyst101_<user>.landing)         dim_facility
                                                                               │
    generate_workshop_data.py ─────► {{CATALOG}}.{{SCHEMA}} star schema ◄──────┘ (same shape)
-        (dim_provider, dim_facility, dim_diagnosis, dim_procedure, fact_encounters)
+     (fact_encounters + dim_provider, dim_facility, dim_diagnosis,
+      dim_procedure, dim_patient, dim_visit_type)
                                              │
-                          ┌──────────────────┼──────────────────┐
-                          ▼                                      ▼
-                   AI/BI Dashboard                          Genie Space
+                     ┌───────────────────────┼───────────────────────┐
+                     ▼                        ▼                        ▼
+              AI/BI Dashboard           Genie Space          advanced_module/
+                                                        (Metric View + SQL functions,
+                                                         PCP continuity → Databricks Day)
 ```
 
-The ETL lab builds `dim_facility` into each attendee's **own sandbox schema**; the AI/BI half runs
-on the **shared, pre-built star schema** (so everyone has the full 80k-row dataset to explore).
+The ETL lab builds `dim_facility` into each attendee's **own sandbox schema**; the AI/BI half and
+the advanced module run on the **shared, pre-built star schema** (the full 80k-row dataset). The
+generator enriches it with `dim_patient` (assigned PCP) + `dim_visit_type` so the advanced module's
+PCP-continuity metric is meaningful.
 
 ## What's in here
 
@@ -56,6 +65,9 @@ analyst101-workshop/
 │   └── etl_instructor_notes.md   · talk track, timings, UC grants, gotchas
 ├── dashboard/workshop.lvdash.json· starter AI/BI (Lakeview) dashboard
 ├── genie/genie_space_config.md   · Genie space setup: instructions + sample questions
+├── advanced_module/              · optional "go deeper" layer (Databricks Day / advanced session)
+│   ├── continuity_assets.sql     · metric view + SQL functions + enriched view (PCP continuity)
+│   └── README.md                 · deploy steps + demo talk track (Metric Views, functions, Genie)
 ├── lab_guides/
 │   ├── agenda.md                 · full Analyst 101 agenda (Foundations+ETL, then AI/BI)
 │   ├── instructor_guide.md       · AI/BI facilitator manual

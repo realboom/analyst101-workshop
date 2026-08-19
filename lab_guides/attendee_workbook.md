@@ -24,6 +24,8 @@ Everything lives in `{{CATALOG}}.{{SCHEMA}}`:
 | `dim_facility` | Hospitals and clinics, with type, city, state, region. |
 | `dim_diagnosis` | ICD-10 codes with plain-language descriptions and clinical category. |
 | `dim_procedure` | Procedure codes (incl. 27447 total knee replacement). |
+| `dim_patient` | Patients with their assigned PCP and home facility (used for the PCP-continuity metric). |
+| `dim_visit_type` | Visit type reference; non-standard types are excluded from PCP continuity. |
 
 **Tableau translation cheat sheet** (keep this handy):
 

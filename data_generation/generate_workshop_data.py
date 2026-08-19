@@ -36,6 +36,7 @@ dbutils.widgets.text("schema", "analyst101_shared", "Target schema")
 dbutils.widgets.text("num_encounters", "80000", "Number of encounters to generate")
 dbutils.widgets.text("num_providers", "45", "Number of providers")
 dbutils.widgets.text("num_facilities", "12", "Number of facilities")
+dbutils.widgets.text("num_patients", "12000", "Number of patients (for PCP continuity)")
 dbutils.widgets.text("start_date", "2023-01-01", "Encounter start date")
 dbutils.widgets.text("end_date", "2025-12-31", "Encounter end date")
 
@@ -44,6 +45,7 @@ SCHEMA = dbutils.widgets.get("schema")
 NUM_ENCOUNTERS = int(dbutils.widgets.get("num_encounters"))
 NUM_PROVIDERS = int(dbutils.widgets.get("num_providers"))
 NUM_FACILITIES = int(dbutils.widgets.get("num_facilities"))
+NUM_PATIENTS = int(dbutils.widgets.get("num_patients"))
 START_DATE = dbutils.widgets.get("start_date")
 END_DATE = dbutils.widgets.get("end_date")
 
@@ -134,6 +136,20 @@ SPECIALTIES = ["Cardiology", "Pulmonology", "Orthopedic Surgery", "Internal Medi
                "Nephrology", "General Surgery", "Obstetrics & Gynecology", "Oncology",
                "Emergency Medicine", "Hospitalist"]
 
+# Specialties that serve as a patient's assigned primary care provider (PCP). Used to flag
+# dim_provider.is_pcp and to assign each patient a PCP. Drives the PCP-continuity story shared
+# with the Databricks Day demo (see advanced_module/).
+PRIMARY_CARE_SPECIALTIES = {"Internal Medicine", "Hospitalist"}
+
+# Visit types. Non-standard types are EXCLUDED from the PCP continuity calculation (mirrors the
+# governed continuity definition). (visit_type_id, visit_type_name, is_standard, weight)
+VISIT_TYPES = [
+    ("OFFICE",       "Standard office visit",   True,  0.82),
+    ("TELEHEALTH",   "Telehealth admin",        False, 0.06),
+    ("NURSE",        "Nurse-only visit",        False, 0.06),
+    ("IMMUNIZATION", "Immunization-only visit", False, 0.06),
+]
+
 # Plausible Intermountain West cities (synthetic). Swap for another region per client if desired.
 FACILITY_SEED = [
     ("Wasatch Regional Medical Center",   "Inpatient Hospital", "Salt Lake City", "UT", "Wasatch Front"),
@@ -195,20 +211,53 @@ FIRST = ["James","Mary","Robert","Patricia","John","Jennifer","Michael","Linda",
 LAST = ["Smith","Johnson","Williams","Brown","Jones","Garcia","Miller","Davis","Rodriguez",
         "Martinez","Hernandez","Lopez","Gonzalez","Wilson","Anderson","Thomas","Taylor","Moore",
         "Nguyen","Patel","Kim","Chen","Okafor","Singh","Ali","Romero","Schultz","Bennett"]
-provider_rows = []
+provider_rows = []  # [provider_id, npi, name, specialty, primary_facility_id, is_pcp]
 for i in range(NUM_PROVIDERS):
     npi = str(random.randint(1000000000, 9999999999))  # 10-digit NPI-style id
     name = f"Dr. {random.choice(FIRST)} {random.choice(LAST)}"
     specialty = random.choice(SPECIALTIES)
     fac = random.choice(facility_rows)
-    provider_rows.append((f"PRV{i+1:03d}", npi, name, specialty, fac[0]))
+    is_pcp = specialty in PRIMARY_CARE_SPECIALTIES
+    provider_rows.append([f"PRV{i+1:03d}", npi, name, specialty, fac[0], is_pcp])
+
+# Guarantee every facility that has providers has at least one PCP, so each patient's home
+# facility can supply an assigned PCP.
+prov_by_fac = {}
+for r in provider_rows:
+    prov_by_fac.setdefault(r[4], []).append(r)
+for fac_id, plist in prov_by_fac.items():
+    if not any(p[5] for p in plist):
+        plist[0][5] = True  # promote the first provider at this facility to PCP
+
 dim_provider = spark.createDataFrame(
-    provider_rows,
-    "provider_id string, npi string, provider_name string, specialty string, primary_facility_id string",
+    [tuple(r) for r in provider_rows],
+    "provider_id string, npi string, provider_name string, specialty string, "
+    "primary_facility_id string, is_pcp boolean",
 )
 dim_provider.write.mode("overwrite").saveAsTable("dim_provider")
 
-print("Dimensions written.")
+# --- dim_visit_type --- (non-standard types are excluded from PCP continuity)
+dim_visit_type = spark.createDataFrame(
+    [(vid, vname, is_std) for (vid, vname, is_std, _w) in VISIT_TYPES],
+    "visit_type_id string, visit_type_name string, is_standard boolean",
+)
+dim_visit_type.write.mode("overwrite").saveAsTable("dim_visit_type")
+
+# --- dim_patient --- each patient has a home facility and an assigned PCP practicing there
+pcp_by_fac = {fac_id: [p[0] for p in plist if p[5]] for fac_id, plist in prov_by_fac.items()}
+pcp_facilities = [f for f, pcps in pcp_by_fac.items() if pcps]
+patient_rows = []  # (patient_id, assigned_pcp_id, home_facility_id, patient_sex)
+for i in range(NUM_PATIENTS):
+    home_fac = random.choice(pcp_facilities)
+    patient_rows.append((f"PAT{i+1:08d}", random.choice(pcp_by_fac[home_fac]),
+                         home_fac, random.choice(["F", "M"])))
+dim_patient = spark.createDataFrame(
+    patient_rows,
+    "patient_id string, assigned_pcp_id string, home_facility_id string, patient_sex string",
+)
+dim_patient.write.mode("overwrite").saveAsTable("dim_patient")
+
+print("Dimensions written (diagnosis, procedure, facility, provider, visit_type, patient).")
 
 # COMMAND ----------
 
@@ -226,6 +275,21 @@ proc_codes = [code if code else "NONE" for (code, *_) in PROCEDURES]
 provider_ids = [r[0] for r in provider_rows]
 prov_to_fac = {r[0]: r[4] for r in provider_rows}
 
+# --- PCP-continuity lookups ---
+prov_ids_by_fac = {}
+for r in provider_rows:
+    prov_ids_by_fac.setdefault(r[4], []).append(r[0])
+pcp_ids = [r[0] for r in provider_rows if r[5]]
+# Each PCP has a base continuity propensity, so per-provider/facility ratios vary realistically.
+pcp_continuity_base = {pid: random.uniform(0.55, 0.90) for pid in pcp_ids}
+patient_ids = [p[0] for p in patient_rows]
+patient_pcp = {p[0]: p[1] for p in patient_rows}
+patient_home = {p[0]: p[2] for p in patient_rows}
+patient_sex_map = {p[0]: p[3] for p in patient_rows}
+visit_type_ids = [v[0] for v in VISIT_TYPES]
+visit_type_weights = [v[3] for v in VISIT_TYPES]
+visit_is_standard = {v[0]: v[2] for v in VISIT_TYPES}
+
 COMPLICATION_TYPES = ["Surgical site infection", "Post-op bleeding", "Hospital-acquired pneumonia",
                       "Venous thromboembolism", "Acute kidney injury", "Adverse drug reaction",
                       "Pressure ulcer", "Sepsis"]
@@ -241,6 +305,25 @@ def gen_row(i):
     icd = random.choice(diag_codes)
     base_mort, base_comp, base_readm = diag_lookup[icd]
 
+    # patient drives facility (their home facility) and sex
+    pid = random.choice(patient_ids)
+    fac = patient_home[pid]
+    assigned_pcp = patient_pcp[pid]
+    sex = patient_sex_map[pid]
+
+    # visit type; continuity is measured on standard visits only
+    vtype = random.choices(visit_type_ids, weights=visit_type_weights)[0]
+    is_std = visit_is_standard[vtype]
+
+    # attending provider: on a standard visit the patient sees their assigned PCP with a
+    # PCP-specific propensity (yields realistic, varying continuity ratios); otherwise they
+    # see another provider practicing at the same facility.
+    if is_std and rnd() < pcp_continuity_base[assigned_pcp]:
+        prov = assigned_pcp
+    else:
+        others = [p for p in prov_ids_by_fac[fac] if p != assigned_pcp]
+        prov = random.choice(others) if others else assigned_pcp
+
     enc_type = random.choices(ENCOUNTER_TYPES, weights=[0.45, 0.35, 0.20])[0]
     # outpatient encounters usually have no procedure / short stay
     if enc_type == "Outpatient":
@@ -251,9 +334,6 @@ def gen_row(i):
         los = max(0, int(random.gauss(4, 3)))
 
     age = min(99, max(0, int(random.gauss(58, 18))))
-    sex = random.choice(["F", "M"])
-    prov = random.choice(provider_ids)
-    fac = prov_to_fac[prov]
 
     # cap the admit offset so discharge (admit + los) never spills past END_DATE
     admit_offset = random.randint(0, max(0, span_days - los))
@@ -277,8 +357,8 @@ def gen_row(i):
     payer = random.choices(PAYER_TYPES, weights=[0.5, 0.3, 0.15, 0.05])[0]
 
     return (
-        f"ENC{i+1:08d}", f"PAT{random.randint(1, NUM_ENCOUNTERS):08d}",
-        prov, fac, icd, proc, enc_type, payer,
+        f"ENC{i+1:08d}", pid,
+        prov, fac, icd, proc, enc_type, payer, vtype,
         admit_date, discharge_date, los, age, sex,
         charges, paid, readmit, mortality, complication, comp_type,
     )
@@ -292,6 +372,7 @@ schema = T.StructType([
     T.StructField("primary_procedure_code", T.StringType()),
     T.StructField("encounter_type", T.StringType()),
     T.StructField("payer_type", T.StringType()),
+    T.StructField("visit_type_id", T.StringType()),
     T.StructField("admit_date", T.DateType()),
     T.StructField("discharge_date", T.DateType()),
     T.StructField("length_of_stay_days", T.IntegerType()),
@@ -326,18 +407,21 @@ TABLE_COMMENTS = {
     "dim_facility": "Hospitals and clinics with type, city, state, and region. One row per facility.",
     "dim_diagnosis": "ICD-10 diagnosis codes with plain-language descriptions and clinical category. One row per code.",
     "dim_procedure": "Procedure codes (CPT-style) with descriptions and category. One row per code.",
+    "dim_patient": "Patients with their assigned primary care provider (PCP) and home facility. One row per patient. PCP continuity compares each visit's attending provider to the patient's assigned PCP.",
+    "dim_visit_type": "Visit type reference. Non-standard visit types (telehealth admin, nurse-only, immunization-only) are EXCLUDED from the PCP continuity calculation.",
 }
 
 COLUMN_COMMENTS = {
     "fact_encounters": {
         "encounter_id": "Primary key. Unique identifier for the encounter.",
-        "patient_id": "Synthetic patient identifier (a patient can have multiple encounters).",
-        "provider_id": "Foreign key to dim_provider. The attending provider.",
-        "facility_id": "Foreign key to dim_facility. Where the encounter happened.",
+        "patient_id": "Foreign key to dim_patient. The patient seen at this encounter (a patient can have multiple encounters).",
+        "provider_id": "Foreign key to dim_provider. The attending provider actually seen (may differ from the patient's assigned PCP).",
+        "facility_id": "Foreign key to dim_facility. Where the encounter happened (the patient's home facility).",
         "primary_icd10_code": "Foreign key to dim_diagnosis. Primary ICD-10 diagnosis code.",
         "primary_procedure_code": "Foreign key to dim_procedure. Primary procedure code (NONE if no procedure).",
         "encounter_type": "Encounter setting: Inpatient, Outpatient, or Emergency.",
         "payer_type": "Payer category: Commercial, Medicare, Medicaid, or Self-Pay.",
+        "visit_type_id": "Foreign key to dim_visit_type. Non-standard visit types are excluded from PCP continuity.",
         "admit_date": "Date the patient was admitted or seen.",
         "discharge_date": "Date the patient was discharged (same day as admit for outpatient).",
         "length_of_stay_days": "Number of days between admit and discharge.",
@@ -356,6 +440,7 @@ COLUMN_COMMENTS = {
         "provider_name": "Provider display name.",
         "specialty": "Clinical specialty (e.g., Cardiology, Orthopedic Surgery).",
         "primary_facility_id": "Foreign key to dim_facility. The provider's primary facility.",
+        "is_pcp": "TRUE if this provider serves as an assigned primary care provider (PCP).",
     },
     "dim_facility": {
         "facility_id": "Primary key. Unique identifier for the facility.",
@@ -374,6 +459,17 @@ COLUMN_COMMENTS = {
         "procedure_code": "Primary key. CPT-style procedure code (NONE means no procedure).",
         "procedure_description": "Plain-language description of the procedure.",
         "procedure_category": "Procedure grouping (e.g., Orthopedic Surgery, Cardiac Procedure).",
+    },
+    "dim_patient": {
+        "patient_id": "Primary key. Unique patient identifier.",
+        "assigned_pcp_id": "Foreign key to dim_provider. The patient's assigned primary care provider (PCP). PCP continuity compares each visit's attending provider to this provider.",
+        "home_facility_id": "Foreign key to dim_facility. The patient's home facility.",
+        "patient_sex": "Patient sex: F or M.",
+    },
+    "dim_visit_type": {
+        "visit_type_id": "Primary key. Visit type code.",
+        "visit_type_name": "Human-readable visit type.",
+        "is_standard": "TRUE for standard visits counted in PCP continuity; FALSE for non-standard types that are EXCLUDED.",
     },
 }
 
@@ -402,6 +498,8 @@ NOT_NULL = {
     "dim_facility": "facility_id",
     "dim_diagnosis": "icd10_code",
     "dim_procedure": "procedure_code",
+    "dim_patient": "patient_id",
+    "dim_visit_type": "visit_type_id",
     "fact_encounters": "encounter_id",
 }
 for tbl, col in NOT_NULL.items():
@@ -413,19 +511,25 @@ PRIMARY_KEYS = {
     "dim_facility": ("pk_dim_facility", "facility_id"),
     "dim_diagnosis": ("pk_dim_diagnosis", "icd10_code"),
     "dim_procedure": ("pk_dim_procedure", "procedure_code"),
+    "dim_patient": ("pk_dim_patient", "patient_id"),
+    "dim_visit_type": ("pk_dim_visit_type", "visit_type_id"),
     "fact_encounters": ("pk_fact_encounters", "encounter_id"),
 }
 for tbl, (name, col) in PRIMARY_KEYS.items():
     spark.sql(f"ALTER TABLE {tbl} DROP CONSTRAINT IF EXISTS {name}")
     spark.sql(f"ALTER TABLE {tbl} ADD CONSTRAINT {name} PRIMARY KEY ({col})")
 
-# 3) Foreign keys (fact -> dims, and provider -> facility).
+# 3) Foreign keys (fact -> dims, provider -> facility, patient -> pcp/facility).
 FOREIGN_KEYS = [
-    ("fact_encounters", "fk_enc_provider",  "provider_id",            "dim_provider",  "provider_id"),
-    ("fact_encounters", "fk_enc_facility",  "facility_id",            "dim_facility",  "facility_id"),
-    ("fact_encounters", "fk_enc_diagnosis", "primary_icd10_code",     "dim_diagnosis", "icd10_code"),
-    ("fact_encounters", "fk_enc_procedure", "primary_procedure_code", "dim_procedure", "procedure_code"),
-    ("dim_provider",    "fk_provider_facility", "primary_facility_id", "dim_facility", "facility_id"),
+    ("fact_encounters", "fk_enc_provider",   "provider_id",            "dim_provider",   "provider_id"),
+    ("fact_encounters", "fk_enc_facility",   "facility_id",            "dim_facility",   "facility_id"),
+    ("fact_encounters", "fk_enc_diagnosis",  "primary_icd10_code",     "dim_diagnosis",  "icd10_code"),
+    ("fact_encounters", "fk_enc_procedure",  "primary_procedure_code", "dim_procedure",  "procedure_code"),
+    ("fact_encounters", "fk_enc_patient",    "patient_id",             "dim_patient",    "patient_id"),
+    ("fact_encounters", "fk_enc_visit_type", "visit_type_id",          "dim_visit_type", "visit_type_id"),
+    ("dim_provider",    "fk_provider_facility", "primary_facility_id", "dim_facility",   "facility_id"),
+    ("dim_patient",     "fk_patient_pcp",       "assigned_pcp_id",     "dim_provider",   "provider_id"),
+    ("dim_patient",     "fk_patient_facility",  "home_facility_id",    "dim_facility",   "facility_id"),
 ]
 for tbl, name, col, ref_tbl, ref_col in FOREIGN_KEYS:
     spark.sql(f"ALTER TABLE {tbl} DROP CONSTRAINT IF EXISTS {name}")
@@ -449,6 +553,31 @@ display(spark.sql("""
     FROM fact_encounters e JOIN dim_facility fac USING (facility_id)
     GROUP BY fac.region
   ) f ORDER BY cnt DESC
+"""))
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ## Sanity check: PCP continuity
+# MAGIC Continuity = share of STANDARD visits where the attending provider is the patient's
+# MAGIC assigned PCP. Expect an overall ratio in roughly the 0.55–0.90 band, with meaningful
+# MAGIC variation across facilities (this is what makes the Databricks Day metric-view / SQL-function
+# MAGIC / Genie demo interesting).
+
+# COMMAND ----------
+
+display(spark.sql("""
+  SELECT fac.region,
+         COUNT(*) AS standard_visits,
+         ROUND(100.0 * AVG(CASE WHEN e.provider_id = p.assigned_pcp_id THEN 1 ELSE 0 END), 1)
+           AS pcp_continuity_pct
+  FROM fact_encounters e
+  JOIN dim_patient p     ON e.patient_id = p.patient_id
+  JOIN dim_visit_type vt ON e.visit_type_id = vt.visit_type_id
+  JOIN dim_facility fac  ON e.facility_id = fac.facility_id
+  WHERE vt.is_standard
+  GROUP BY fac.region
+  ORDER BY standard_visits DESC
 """))
 
 # COMMAND ----------

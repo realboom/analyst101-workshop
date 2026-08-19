@@ -50,9 +50,12 @@ public repo** — this repo git-ignores `clients/`.
    a shared volume; the generator has an optional cell to write it).
 5. **Import the dashboard** — `dashboard/workshop.lvdash.json` (already retargeted to
    `{{CATALOG}}.{{SCHEMA}}` by the find/replace). Confirm widgets render.
-6. **Create the Genie space** — follow `genie/genie_space_config.md` on the five star-schema tables.
+6. **Create the Genie space** — follow `genie/genie_space_config.md` on the star-schema tables.
 7. **Smoke test** — run one Designer build end-to-end (12 clean rows + lineage) and ask Genie one
    question.
+8. **(Optional) Advanced module** — for a Databricks Day / advanced follow-on on the *same*
+   dataset, run `advanced_module/continuity_assets.sql` (metric view + SQL functions + enriched
+   view for PCP continuity) and register them as Genie trusted assets. See `advanced_module/README.md`.
 
 ## What to customize per audience
 - **Industry:** the dataset is synthetic healthcare and works for payers and providers as-is. For
