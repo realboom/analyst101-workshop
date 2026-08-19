@@ -1,0 +1,6 @@
+# Per-client overlays hold customer-identifying values (names, workspace URLs,
+# engagement notes). Keep them out of the public repo.
+clients/
+
+# OS / editor cruft
+.DS_Store
