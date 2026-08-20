@@ -42,12 +42,14 @@ public repo** — this repo git-ignores `clients/`.
 
 1. **Fill tokens** (above) in your client copy.
 2. **Generate the shared dataset** — run `data_generation/generate_workshop_data.py` with widgets
-   `catalog={{CATALOG}}`, `schema={{SCHEMA}}` on serverless. Builds the star schema + comments +
-   PK/FKs the AI/BI half relies on.
+   `catalog={{CATALOG}}`, `schema={{SCHEMA}}`, and **`profile`** (`adult` or `pediatric`) on
+   serverless. Builds the star schema + PCP-continuity enrichment + comments + PK/FKs. (Run it in
+   a Databricks Git folder so it can import `profiles/`.)
 3. **Provision ETL sandboxes** — one schema per attendee `{{CATALOG}}.analyst101_<user>` with
    `USE CATALOG` + (on their schema) `USE SCHEMA`, `CREATE VOLUME`, `CREATE TABLE`.
-4. **Stage the ETL file** — share `etl_lab/facilities_raw.csv` with attendees (or pre-stage it in
-   a shared volume; the generator has an optional cell to write it).
+4. **Stage the ETL file** — share the profile's `etl_lab/facilities_raw.<profile>.csv` with
+   attendees (or pre-stage it in a shared volume via the generator's optional `stage_raw_csv` cell).
+   If you changed a profile's facilities, regenerate with `python etl_lab/build_raw_csv.py --all`.
 5. **Import the dashboard** — `dashboard/workshop.lvdash.json` (already retargeted to
    `{{CATALOG}}.{{SCHEMA}}` by the find/replace). Confirm widgets render.
 6. **Create the Genie space** — follow `genie/genie_space_config.md` on the star-schema tables.
@@ -58,10 +60,11 @@ public repo** — this repo git-ignores `clients/`.
    view for PCP continuity) and register them as Genie trusted assets. See `advanced_module/README.md`.
 
 ## What to customize per audience
-- **Industry:** the dataset is synthetic healthcare and works for payers and providers as-is. For
-  a non-healthcare account, swap the code lists in the generator (diagnoses/procedures/facilities)
-  and `{{INDUSTRY_FLAVOR}}`; the medallion lab and AI/BI flow are industry-agnostic.
-- **ETL target table:** the lab builds `dim_facility` (small, relatable). To use a different
-  dimension, swap `etl_lab/facilities_raw.csv` and the Step 5–6 transforms in the lab guide.
+- **Population:** pick `adult` or `pediatric` via the `profile` widget. To add another population
+  or vertical, copy `profiles/pediatric.py` to a new module, edit its seed lists, register it in
+  `profiles/__init__.py`, and run `python etl_lab/build_raw_csv.py --profile <name>`. The generator,
+  ETL lab, and advanced module all pick it up unchanged — no code edits elsewhere.
+- **ETL target table:** the lab builds `dim_facility` (small, relatable). The raw CSV is generated
+  from the profile's facility list, so changing a profile's facilities automatically updates the lab.
 - **Tableau cheat-sheet:** the AI/BI workbook keeps an optional Tableau↔AI/BI translation callout.
   Leave it in for Tableau shops; drop it otherwise.

@@ -40,12 +40,13 @@ Today: **upload a raw facilities file → bronze → silver → gold `dim_facili
 ## Step 2 · Upload the raw file
 
 1. Open your new **`landing`** volume.
-2. Click **Upload to this volume** and choose **`facilities_raw.csv`** (your instructor will
-   share it, or download it from the workshop repo).
+2. Click **Upload to this volume** and choose the **`facilities_raw.<profile>.csv`** file for
+   your workshop (e.g. `facilities_raw.pediatric.csv`) — your instructor will share it, or
+   download it from the workshop repo.
 3. You'll see it listed. Peek at it — notice it's *messy on purpose*: extra spaces, `State`
-   spelled every which way ("Utah", "UT ", "ut"), inconsistent `Type` capitalization, two
-   rows with a **blank Region**, a **duplicate** row for FAC003, and a trailing empty line.
-   This is what real source extracts look like. Our job is to fix it.
+   spelled every which way (full name / code / different case), inconsistent `Type`
+   capitalization, two rows with a **blank Region**, a **duplicate** facility row, and a trailing
+   empty line. This is what real source extracts look like. Our job is to fix it.
 
 ## Step 3 · Open Lakeflow Designer and start a build
 
@@ -56,8 +57,9 @@ Today: **upload a raw facilities file → bronze → silver → gold `dim_facili
 ## Step 4 · Bronze — bring the raw file in exactly as-is
 
 1. Click **Select source operator** (or **+ → Source**).
-2. Choose **Browse** and navigate to `{{CATALOG}}.analyst101_<you>.landing` → **`facilities_raw.csv`**
-   (or **Ingest a folder/volume** and point at the `landing` volume — Designer auto-detects CSV).
+2. Choose **Browse** and navigate to `{{CATALOG}}.analyst101_<you>.landing` → your
+   **`facilities_raw.<profile>.csv`** (or **Ingest a folder/volume** and point at the `landing`
+   volume — Designer auto-detects CSV).
 3. In the source pane, confirm it parsed into columns (`Facility ID`, `Facility Name`, `Type`,
    `City`, `State`, `Region`). Leave everything raw — **no cleaning yet**. Click **Apply**.
 4. This is your **bronze** layer: the source, faithfully. You should see ~13 rows (the dupe and
@@ -71,31 +73,28 @@ Today: **upload a raw facilities file → bronze → silver → gold `dim_facili
 Add transform operators one at a time (each shows a live preview so you see the effect):
 
 1. **Trim whitespace** — add a **Transform / Clean** step and trim leading/trailing spaces on
-   `Facility Name`, `Type`, `City`, `State`, `Region`. (Watch " Red Rock…" snap into place.)
-2. **Standardize `State` to a 2-letter code** — add a **derived / case** expression:
-   uppercase `State`, then map `UTAH→UT`, `IDAHO→ID`, `NEVADA→NV` (leave already-good codes).
-   Now every row is `UT` / `ID` / `NV`.
-3. **Proper-case `Type`** — apply title-case so `inpatient hospital`, `INPATIENT HOSPITAL`, and
-   `Inpatient Hospital` all become one value: **`Inpatient Hospital`**.
+   `Facility Name`, `Type`, `City`, `State`, `Region`. (Watch the padded names snap into place.)
+2. **Standardize `State` to a 2-letter code** — add a **derived / case** expression: uppercase
+   `State`, then map any full state name to its code (e.g. `UTAH→UT`, `CALIFORNIA→CA`) using a
+   standard US-state lookup; leave already-good codes. Now every row is a clean 2-letter code.
+3. **Proper-case `Type`** — apply title-case so e.g. `pediatric clinic`, `PEDIATRIC CLINIC`, and
+   `Pediatric Clinic` all become one value: **`Pediatric Clinic`**.
 4. **Drop empty rows** — add a **Filter** that removes rows where `Facility ID` is null/blank
    (kills the trailing empty line).
 5. **De-duplicate** — add a **Remove duplicates / Deduplicate** step keyed on **`Facility ID`**.
-   The two FAC003 rows collapse to one. (Notice we standardized *first*, so the duplicate is a
-   true duplicate by the time we dedupe.)
+   The duplicated facility row collapses to one. (Notice we standardized *first*, so the duplicate
+   is a true duplicate by the time we dedupe.)
 
 You now have a **silver** result: **12 clean, conformed rows** — but two of them still have a
 blank `Region`.
 
 ## Step 6 · Gold — make it business-ready `dim_facility`
 
-1. **Derive the missing `Region`** — add a case expression that fills a blank `Region` from the
-   `City`:
-   - Salt Lake City / Provo / Murray → **Wasatch Front**
-   - Ogden / Logan → **Northern Utah**
-   - St. George → **Southern Utah**
-   - Boise / Idaho Falls → **Idaho**
-   - Las Vegas → **Nevada**
-   FAC005 (Logan) and FAC010 (Provo) now get a Region. **No more blanks.**
+1. **Fill the missing `Region`** — the two blank-region rows each share a **City** with another
+   facility that *does* have a region. Fill the blank from that same-city sibling: add a
+   **window / group** step that takes `MAX(Region)` (or first non-null) **partitioned by `City`**,
+   and use it where `Region` is blank. Data fills the gap — no hand-typed lookup needed.
+   **No more blanks.**
 2. **Rename to the final schema** (snake_case) so it matches how tables are named here:
    `Facility ID→facility_id`, `Facility Name→facility_name`, `Type→facility_type`,
    `City→city`, `State→state`, `Region→region`.
@@ -107,7 +106,7 @@ blank `Region`.
 
 1. Back in **Catalog**, open `{{CATALOG}}.analyst101_<you>.dim_facility`. Confirm **12 rows**,
    clean `state` codes, proper-cased `facility_type`, and **no blank regions**.
-2. Open the **Lineage** tab — you'll see the graph: `facilities_raw.csv` (volume) → bronze →
+2. Open the **Lineage** tab — you'll see the graph: `facilities_raw.<profile>.csv` (volume) → bronze →
    silver → **`dim_facility`**. You didn't write a line of code, but you got a governed,
    fully-lineaged pipeline you could schedule to run every night.
 3. *(Optional, if you want the full dimension treatment)* add a primary key + comments:

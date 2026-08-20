@@ -1,0 +1,15 @@
+Facility ID,Facility Name,Type,City,State,Region
+FAC001,  Summit Children's Hospital ,pediatric hospital,Denver,Colorado,Mountain
+FAC002,Riverside Pediatric Center,PEDIATRIC HOSPITAL,Denver,CO ,
+FAC003,Bayview Children's Medical Center,Pediatric Hospital,Seattle,wa,Pacific Northwest
+FAC003,Bayview Children's Medical Center,pediatric hospital,Seattle ,WA,Pacific Northwest
+FAC004,Lakeshore Pediatric Clinic,pediatric clinic,Seattle,WA,
+FAC005,  Prairie Children's Hospital ,PEDIATRIC HOSPITAL,Kansas City,Missouri,Midwest
+FAC006,Gateway Pediatric Specialty Center,Specialty Center,St. Louis,MO ,Midwest
+FAC007,Harborview Children's Clinic,pediatric clinic,Boston,ma,Northeast
+FAC008,Piedmont Children's Hospital,PEDIATRIC HOSPITAL,Atlanta,GA,Southeast
+FAC009,  Sunrise Pediatric Urgent Care ,Urgent Care,Phoenix,Arizona,Southwest
+FAC010,Cactus Children's Clinic,pediatric clinic,Phoenix,AZ ,Southwest
+FAC011,Magnolia Children's Medical Center,PEDIATRIC HOSPITAL,Dallas,tx,South Central
+FAC012,Bluebonnet Pediatric Clinic,Pediatric Clinic,Austin,TX,South Central
+

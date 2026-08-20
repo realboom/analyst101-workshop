@@ -1,6 +1,6 @@
 # ETL Lab — Instructor Notes
 
-**The lab:** `etl_lab/etl_lab_guide.md`. Attendees create a volume, upload `facilities_raw.csv`,
+**The lab:** `etl_lab/etl_lab_guide.md`. Attendees create a volume, upload their profile's `facilities_raw.<profile>.csv`,
 and build a no-code **bronze → silver → gold** pipeline in **Lakeflow Designer** that lands a
 clean `dim_facility`. This is the Analyst 101 foundations front-half; the AI/BI half follows on the
 pre-built shared star schema.
@@ -24,28 +24,29 @@ themselves; float and help.
 ## What each messy element teaches (and the operator that fixes it)
 | In the raw file | Layer | Designer operator |
 |---|---|---|
-| Leading/trailing spaces (`  Wasatch… `, ` Red Rock…`) | Silver | Trim / clean |
-| `State` = "Utah" / "UT " / "ut" / "Idaho" / "ID" / "Nevada" | Silver | Upper + case/map to 2-letter |
-| `Type` = "inpatient hospital" / "INPATIENT HOSPITAL" | Silver | Title-case |
+| Leading/trailing spaces on names | Silver | Trim / clean |
+| `State` as full name / code / mixed case (e.g. "Utah" / "UT " / "ut") | Silver | Upper + map to 2-letter (standard US-state lookup) |
+| `Type` in mixed casing (e.g. "pediatric clinic" / "PEDIATRIC CLINIC") | Silver | Title-case |
 | Trailing blank line | Silver | Filter `Facility ID` not null |
-| Duplicate FAC003 row | Silver | Deduplicate on `facility_id` |
-| Blank `Region` on FAC005 (Logan), FAC010 (Provo) | Gold | Derive region from city |
+| One duplicated facility row | Silver | Deduplicate on `facility_id` |
+| Blank `Region` on two facilities (each shares a City with a sibling) | Gold | Fill from same-city sibling (window by `City`) |
 | `Facility ID` → `facility_id` etc. | Gold | Rename to snake_case |
 
-**Order matters — call it out:** standardize *before* you dedupe, or the two FAC003 rows won't
-match as duplicates. This is a genuine ETL lesson, not a Databricks quirk.
+**Order matters — call it out:** standardize *before* you dedupe, or the duplicated rows won't
+match. This is a genuine ETL lesson, not a Databricks quirk.
 
-**Expected end state:** exactly **12 rows**, states in `{UT, ID, NV}`, 5 proper-cased types, no
-null regions. (Validated: the documented transforms reproduce the star-schema `dim_facility`.)
+**Expected end state:** exactly **12 rows**, clean 2-letter states, proper-cased types, no null
+regions. (Validated per profile: `python etl_lab/build_raw_csv.py --all --check` proves the
+documented transforms reproduce each profile's star-schema `dim_facility`.)
 
 ## Prerequisites to provision BEFORE the session
 - **Serverless compute** available in the workspace (Designer runs on serverless).
 - Each attendee has a **sandbox schema** `{{CATALOG}}.analyst101_<user>` and these grants on it:
   `USE CATALOG` on `{{CATALOG}}`, `USE SCHEMA` + `CREATE VOLUME` + `CREATE TABLE` on their schema.
 - Attendees can reach **Lakeflow / Designer** (Data Engineering entitlement).
-- `facilities_raw.csv` shared with attendees (Slack/email/repo link), OR pre-staged in a shared
-  volume they can copy from. The data generator has an optional cell that writes it to a volume
-  as a backup — see `data_generation/generate_workshop_data.py`.
+- The profile's `facilities_raw.<profile>.csv` shared with attendees (Slack/email/repo link), OR
+  pre-staged in a shared volume they can copy from. The data generator has an optional
+  `stage_raw_csv` cell that writes the matching profile's file to a volume as a backup.
 
 ## Common gotchas
 - **"I don't see Create Volume / can't create a table"** → missing `CREATE VOLUME` / `CREATE TABLE`
@@ -53,10 +54,10 @@ null regions. (Validated: the documented transforms reproduce the star-schema `d
 - **"Designer won't start / no compute"** → serverless not enabled or not selected.
 - **Source parsed as one column** → header/delimiter detection; re-open the source pane and
   confirm comma-delimited with header row.
-- **Dedup left 13 rows** → they deduped *before* standardizing; the two FAC003 rows still differ
+- **Dedup left 13 rows** → they deduped *before* standardizing; the duplicated rows still differ
   by case/whitespace. Reorder: clean → standardize → dedupe.
-- **Region still blank after gold** → the city→region case expression missed Logan or Provo;
-  check spelling and that the expression runs on the *trimmed* city.
+- **Region still blank after gold** → the same-city sibling fill ran on the *untrimmed* City (so
+  the two rows didn't match as the same city); trim City first, then partition by City.
 
 ## If you're short on time
 Drop the optional PK/comments (Step 7.3) and the standalone silver materialization — a single

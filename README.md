@@ -29,10 +29,16 @@ account, then provision and deploy. See **[`TEMPLATE.md`](TEMPLATE.md)** for tok
 per-client setup checklist. Instantiate into a `clients/<name>/` overlay — those hold
 customer-identifying values, so they're kept **out of this public repo** (`clients/` is git-ignored).
 
+**Pick a population profile.** The dataset comes in flavors — `adult` (acute care) and `pediatric`
+(children's health) — selected by the generator's `profile` widget. A profile
+([`profiles/`](profiles/)) is the single source of truth for its facilities, diagnoses,
+procedures, specialties, and ages; the generator **and** the ETL-lab raw CSV both derive from it,
+so they never drift. Add a vertical by dropping in a new profile module.
+
 ## Data flow
 
 ```
-facilities_raw.csv ──upload──► UC Volume ──Lakeflow Designer──►  bronze ─► silver ─► gold
+facilities_raw.<profile>.csv ──upload──► UC Volume ──Lakeflow Designer──►  bronze ─► silver ─► gold
    (messy source extract)      ({{CATALOG}}.analyst101_<user>.landing)         dim_facility
                                                                               │
    generate_workshop_data.py ─────► {{CATALOG}}.{{SCHEMA}} star schema ◄──────┘ (same shape)
@@ -57,10 +63,16 @@ PCP-continuity metric is meaningful.
 analyst101-workshop/
 ├── README.md                     · this file
 ├── TEMPLATE.md                   · placeholder tokens + per-client instantiate checklist
+├── profiles/                     · population "flavor packs" — single source of truth per dataset
+│   ├── common.py                 · shared name pools, visit types, US-state map, messiness recipe
+│   ├── adult.py                  · adult / acute-care seed data
+│   └── pediatric.py              · pediatric / children's-health seed data
 ├── data_generation/
-│   └── generate_workshop_data.py · parameterized synthetic dataset (Databricks notebook)
+│   └── generate_workshop_data.py · parameterized synthetic dataset (picks a profile via widget)
 ├── etl_lab/                      · the Foundations + ETL front-half
-│   ├── facilities_raw.csv        · deliberately messy source extract of dim_facility
+│   ├── build_raw_csv.py          · generates each profile's messy CSV (no drift from the dataset)
+│   ├── facilities_raw.adult.csv  · messy source extract (adult) — derived from profiles/adult
+│   ├── facilities_raw.pediatric.csv · messy source extract (pediatric)
 │   ├── etl_lab_guide.md          · attendee steps (volume → Designer bronze→silver→gold)
 │   └── etl_instructor_notes.md   · talk track, timings, UC grants, gotchas
 ├── dashboard/workshop.lvdash.json· starter AI/BI (Lakeview) dashboard

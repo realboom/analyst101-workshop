@@ -8,7 +8,7 @@
 # MAGIC **where it happened** (provider + facility), and **the outcome** (readmission,
 # MAGIC mortality, complication) — designed so we can demonstrate:
 # MAGIC
-# MAGIC - **Aggregations** by provider and facility (their differentiator vs. Intermountain Acute Care)
+# MAGIC - **Aggregations** by provider and facility
 # MAGIC - **Trends** over time (36 months of encounters)
 # MAGIC - **Drill-downs** (region → facility → provider → encounter)
 # MAGIC - **Outcome rates** (readmit / mortality / complication) for quality dashboards
@@ -37,6 +37,7 @@ dbutils.widgets.text("num_encounters", "80000", "Number of encounters to generat
 dbutils.widgets.text("num_providers", "45", "Number of providers")
 dbutils.widgets.text("num_facilities", "12", "Number of facilities")
 dbutils.widgets.text("num_patients", "12000", "Number of patients (for PCP continuity)")
+dbutils.widgets.dropdown("profile", "adult", ["adult", "pediatric"], "Data profile (population)")
 dbutils.widgets.text("start_date", "2023-01-01", "Encounter start date")
 dbutils.widgets.text("end_date", "2025-12-31", "Encounter end date")
 
@@ -46,6 +47,7 @@ NUM_ENCOUNTERS = int(dbutils.widgets.get("num_encounters"))
 NUM_PROVIDERS = int(dbutils.widgets.get("num_providers"))
 NUM_FACILITIES = int(dbutils.widgets.get("num_facilities"))
 NUM_PATIENTS = int(dbutils.widgets.get("num_patients"))
+PROFILE_NAME = dbutils.widgets.get("profile")
 START_DATE = dbutils.widgets.get("start_date")
 END_DATE = dbutils.widgets.get("end_date")
 
@@ -74,97 +76,40 @@ spark.sql(f"USE {CATALOG}.{SCHEMA}")
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## Reference data: curated medical code lists
-# MAGIC Real ICD-10 / procedure codes with plain-language descriptions, grouped into clinical
-# MAGIC categories. Curated (not random) so the dashboard and Genie answers read like real
-# MAGIC healthcare analytics. Includes a total knee-replacement example (CPT 27447) as a handy anchor.
+# MAGIC ## Load the data profile
+# MAGIC A **profile** (see `profiles/`) is the single source of truth for one synthetic population
+# MAGIC — its facilities, diagnoses, procedures, specialties, and age distribution. The `profile`
+# MAGIC widget (`adult` / `pediatric`) selects it. The ETL-lab raw CSV is built from the SAME
+# MAGIC profile (`etl_lab/build_raw_csv.py`), so the workshop data and the lab file never drift.
+# MAGIC
+# MAGIC Requires the repo on the Python path — works in a Databricks Git folder or local checkout.
 
 # COMMAND ----------
 
-# (icd10_code, description, clinical_category, base_mortality, base_complication, base_readmit)
-# base_* are baseline outcome probabilities used to make outcomes condition-dependent.
-DIAGNOSES = [
-    ("I21.4",  "Non-ST elevation myocardial infarction (NSTEMI)", "Cardiovascular", 0.06, 0.18, 0.20),
-    ("I50.9",  "Heart failure, unspecified",                      "Cardiovascular", 0.05, 0.15, 0.24),
-    ("I63.9",  "Cerebral infarction (stroke), unspecified",       "Cardiovascular", 0.08, 0.20, 0.18),
-    ("I48.91", "Atrial fibrillation, unspecified",                "Cardiovascular", 0.02, 0.08, 0.14),
-    ("J18.9",  "Pneumonia, unspecified organism",                 "Respiratory",    0.04, 0.12, 0.16),
-    ("J44.1",  "COPD with acute exacerbation",                    "Respiratory",    0.03, 0.11, 0.21),
-    ("J96.00", "Acute respiratory failure",                       "Respiratory",    0.10, 0.22, 0.19),
-    ("M17.11", "Unilateral primary osteoarthritis, right knee",   "Orthopedic",     0.002,0.06, 0.07),
-    ("M17.12", "Unilateral primary osteoarthritis, left knee",    "Orthopedic",     0.002,0.06, 0.07),
-    ("M16.11", "Unilateral primary osteoarthritis, right hip",    "Orthopedic",     0.002,0.06, 0.07),
-    ("S72.001A","Fracture of femur, initial encounter",           "Orthopedic",     0.02, 0.10, 0.12),
-    ("E11.65", "Type 2 diabetes with hyperglycemia",              "Endocrine",      0.01, 0.07, 0.13),
-    ("E11.10", "Type 2 diabetes with ketoacidosis",               "Endocrine",      0.03, 0.10, 0.17),
-    ("N17.9",  "Acute kidney failure, unspecified",               "Renal",          0.07, 0.16, 0.22),
-    ("N18.6",  "End stage renal disease",                         "Renal",          0.06, 0.14, 0.25),
-    ("K35.80", "Acute appendicitis, unspecified",                 "Gastrointestinal",0.005,0.05, 0.06),
-    ("K85.90", "Acute pancreatitis, unspecified",                 "Gastrointestinal",0.03, 0.12, 0.15),
-    ("A41.9",  "Sepsis, unspecified organism",                    "Infectious",     0.14, 0.25, 0.20),
-    ("O80",    "Encounter for full-term uncomplicated delivery",  "Maternity",      0.0005,0.03, 0.04),
-    ("O14.90", "Pre-eclampsia, unspecified",                      "Maternity",      0.004,0.09, 0.10),
-    ("C50.911","Malignant neoplasm of right breast",              "Oncology",       0.05, 0.13, 0.16),
-    ("C34.90", "Malignant neoplasm of lung",                      "Oncology",       0.12, 0.20, 0.19),
-    ("F32.9",  "Major depressive disorder, single episode",       "Behavioral",     0.005,0.04, 0.11),
-    ("R07.9",  "Chest pain, unspecified",                         "Cardiovascular", 0.005,0.04, 0.09),
-]
+import os, sys
 
-# (procedure_code, description, category) — CPT-style, plus the knee replacement example
-PROCEDURES = [
-    ("27447", "Total knee arthroplasty (knee replacement)",       "Orthopedic Surgery"),
-    ("27130", "Total hip arthroplasty (hip replacement)",         "Orthopedic Surgery"),
-    ("27236", "Open treatment of femoral fracture",               "Orthopedic Surgery"),
-    ("92928", "Percutaneous coronary intervention (stent)",       "Cardiac Procedure"),
-    ("33533", "Coronary artery bypass graft (CABG)",              "Cardiac Surgery"),
-    ("93010", "Electrocardiogram interpretation",                 "Cardiac Diagnostic"),
-    ("44970", "Laparoscopic appendectomy",                        "General Surgery"),
-    ("47562", "Laparoscopic cholecystectomy",                     "General Surgery"),
-    ("59400", "Routine obstetric care incl. vaginal delivery",    "Maternity"),
-    ("59510", "Routine obstetric care incl. cesarean delivery",   "Maternity"),
-    ("90935", "Hemodialysis procedure",                           "Renal"),
-    ("31500", "Endotracheal intubation, emergency",               "Critical Care"),
-    ("99291", "Critical care, first 30-74 minutes",               "Critical Care"),
-    ("99223", "Initial hospital inpatient care, high complexity", "Evaluation & Mgmt"),
-    ("99285", "Emergency department visit, high complexity",      "Emergency"),
-    ("19303", "Mastectomy, simple, complete",                     "Oncology Surgery"),
-    ("96413", "Chemotherapy administration, IV infusion",         "Oncology Treatment"),
-    (None,    "No procedure performed",                           "None"),
-]
+# Make the repo root importable (Databricks Git folder or local checkout).
+_d = os.getcwd()
+for _ in range(6):
+    if os.path.exists(os.path.join(_d, "profiles", "__init__.py")):
+        if _d not in sys.path:
+            sys.path.insert(0, _d)
+        break
+    _d = os.path.dirname(_d)
 
-SPECIALTIES = ["Cardiology", "Pulmonology", "Orthopedic Surgery", "Internal Medicine",
-               "Nephrology", "General Surgery", "Obstetrics & Gynecology", "Oncology",
-               "Emergency Medicine", "Hospitalist"]
+from profiles import get_profile
+from profiles.common import (FIRST_NAMES as FIRST, LAST_NAMES as LAST, VISIT_TYPES,
+                             COMPLICATION_TYPES, ENCOUNTER_TYPES, PAYER_TYPES)
 
-# Specialties that serve as a patient's assigned primary care provider (PCP). Used to flag
-# dim_provider.is_pcp and to assign each patient a PCP. Drives the PCP-continuity story shared
-# with the Databricks Day demo (see advanced_module/).
-PRIMARY_CARE_SPECIALTIES = {"Internal Medicine", "Hospitalist"}
-
-# Visit types. Non-standard types are EXCLUDED from the PCP continuity calculation (mirrors the
-# governed continuity definition). (visit_type_id, visit_type_name, is_standard, weight)
-VISIT_TYPES = [
-    ("OFFICE",       "Standard office visit",   True,  0.82),
-    ("TELEHEALTH",   "Telehealth admin",        False, 0.06),
-    ("NURSE",        "Nurse-only visit",        False, 0.06),
-    ("IMMUNIZATION", "Immunization-only visit", False, 0.06),
-]
-
-# Plausible Intermountain West cities (synthetic). Swap for another region per client if desired.
-FACILITY_SEED = [
-    ("Wasatch Regional Medical Center",   "Inpatient Hospital", "Salt Lake City", "UT", "Wasatch Front"),
-    ("Canyon View Hospital",              "Inpatient Hospital", "Provo",          "UT", "Wasatch Front"),
-    ("Great Salt Lake Medical Center",    "Inpatient Hospital", "Ogden",          "UT", "Northern Utah"),
-    ("Red Rock Regional Hospital",        "Inpatient Hospital", "St. George",     "UT", "Southern Utah"),
-    ("Cache Valley Community Hospital",    "Critical Access",    "Logan",          "UT", "Northern Utah"),
-    ("Treasure Valley Medical Center",    "Inpatient Hospital", "Boise",          "ID", "Idaho"),
-    ("Snake River Hospital",              "Critical Access",    "Idaho Falls",    "ID", "Idaho"),
-    ("High Desert Specialty Clinic",      "Outpatient Clinic",  "Las Vegas",      "NV", "Nevada"),
-    ("Mountain West Surgical Center",     "Ambulatory Surgery", "Salt Lake City", "UT", "Wasatch Front"),
-    ("Bonneville Family Clinic",          "Outpatient Clinic",  "Provo",          "UT", "Wasatch Front"),
-    ("Summit Cardiology Institute",       "Specialty Center",   "Salt Lake City", "UT", "Wasatch Front"),
-    ("Valley Women's & Children's",       "Specialty Center",   "Murray",         "UT", "Wasatch Front"),
-]
+PROFILE = get_profile(PROFILE_NAME)
+DIAGNOSES = PROFILE["diagnoses"]
+PROCEDURES = PROFILE["procedures"]
+SPECIALTIES = PROFILE["specialties"]
+PRIMARY_CARE_SPECIALTIES = PROFILE["primary_care_specialties"]
+FACILITY_SEED = PROFILE["facility_seed"]
+AGE = PROFILE["age"]
+print(f"Profile: {PROFILE['name']} — {PROFILE['label']} "
+      f"({len(DIAGNOSES)} diagnoses, {len(FACILITY_SEED)} facilities, ages {AGE['min']}-{AGE['max']})")
 
 # COMMAND ----------
 
@@ -204,13 +149,7 @@ dim_facility = spark.createDataFrame(
 )
 dim_facility.write.mode("overwrite").saveAsTable("dim_facility")
 
-# --- dim_provider ---
-FIRST = ["James","Mary","Robert","Patricia","John","Jennifer","Michael","Linda","David",
-         "Elizabeth","William","Barbara","Richard","Susan","Joseph","Karen","Thomas","Nancy",
-         "Maria","Carlos","Wei","Priya","Ahmed","Sofia","Hyun","Fatima","Diego","Aisha"]
-LAST = ["Smith","Johnson","Williams","Brown","Jones","Garcia","Miller","Davis","Rodriguez",
-        "Martinez","Hernandez","Lopez","Gonzalez","Wilson","Anderson","Thomas","Taylor","Moore",
-        "Nguyen","Patel","Kim","Chen","Okafor","Singh","Ali","Romero","Schultz","Bennett"]
+# --- dim_provider --- (FIRST / LAST name pools imported from profiles.common)
 provider_rows = []  # [provider_id, npi, name, specialty, primary_facility_id, is_pcp]
 for i in range(NUM_PROVIDERS):
     npi = str(random.randint(1000000000, 9999999999))  # 10-digit NPI-style id
@@ -290,12 +229,7 @@ visit_type_ids = [v[0] for v in VISIT_TYPES]
 visit_type_weights = [v[3] for v in VISIT_TYPES]
 visit_is_standard = {v[0]: v[2] for v in VISIT_TYPES}
 
-COMPLICATION_TYPES = ["Surgical site infection", "Post-op bleeding", "Hospital-acquired pneumonia",
-                      "Venous thromboembolism", "Acute kidney injury", "Adverse drug reaction",
-                      "Pressure ulcer", "Sepsis"]
-ENCOUNTER_TYPES = ["Inpatient", "Outpatient", "Emergency"]
-PAYER_TYPES = ["Commercial", "Medicare", "Medicaid", "Self-Pay"]
-
+# COMPLICATION_TYPES / ENCOUNTER_TYPES / PAYER_TYPES imported from profiles.common
 start = date.fromisoformat(START_DATE)
 end = date.fromisoformat(END_DATE)
 span_days = (end - start).days
@@ -333,7 +267,7 @@ def gen_row(i):
         proc = random.choice(proc_codes)
         los = max(0, int(random.gauss(4, 3)))
 
-    age = min(99, max(0, int(random.gauss(58, 18))))
+    age = min(AGE["max"], max(AGE["min"], int(random.gauss(AGE["mean"], AGE["std"]))))
 
     # cap the admit offset so discharge (admit + los) never spills past END_DATE
     admit_offset = random.randint(0, max(0, span_days - los))
@@ -584,40 +518,24 @@ display(spark.sql("""
 
 # MAGIC %md
 # MAGIC ## (Optional) Stage the messy ETL-lab file into a Volume
-# MAGIC For the Foundations + ETL lab (`etl_lab/etl_lab_guide.md`), attendees upload
-# MAGIC `etl_lab/facilities_raw.csv` themselves. This optional cell also stages a **backup copy** in
-# MAGIC a shared volume so instructors have it on hand if a laptop upload hiccups. It writes the same
-# MAGIC deliberately-messy extract that conforms into the clean 12-row `dim_facility`.
+# MAGIC For the Foundations + ETL lab (`etl_lab/etl_lab_guide.md`), attendees upload the raw CSV
+# MAGIC themselves. This optional cell stages a **backup copy** in a shared volume so instructors
+# MAGIC have it on hand if a laptop upload hiccups. It builds the deliberately-messy extract from the
+# MAGIC **same profile** as the dataset (via `profiles.common`), so it always matches — no drift.
 # MAGIC
-# MAGIC Set `stage_raw_csv=true` to run it; it creates `{catalog}.{schema}.landing/facilities_raw.csv`.
+# MAGIC Set `stage_raw_csv=true` to run it; it creates
+# MAGIC `{catalog}.{schema}.landing/facilities_raw.{profile}.csv`.
 
 # COMMAND ----------
 
 dbutils.widgets.dropdown("stage_raw_csv", "false", ["true", "false"], "Stage ETL-lab raw CSV to a volume?")
 
 if dbutils.widgets.get("stage_raw_csv") == "true":
-    # Deliberately messy: mixed-case/blank Region, inconsistent State, extra whitespace,
-    # a duplicate FAC003 row, and a trailing blank line. Mirrors etl_lab/facilities_raw.csv.
-    RAW_CSV = (
-        "Facility ID,Facility Name,Type,City,State,Region\n"
-        "FAC001,  Wasatch Regional Medical Center ,inpatient hospital,Salt Lake City,Utah,Wasatch Front\n"
-        "FAC002,Canyon View Hospital,Inpatient Hospital,Provo,UT ,Wasatch Front\n"
-        "FAC003,Great Salt Lake Medical Center,INPATIENT HOSPITAL,Ogden,UT,Northern Utah\n"
-        "FAC003,Great Salt Lake Medical Center,Inpatient Hospital,Ogden ,Utah,Northern Utah\n"
-        "FAC004, Red Rock Regional Hospital,Inpatient Hospital,St. George,UT,Southern Utah\n"
-        "FAC005,Cache Valley Community Hospital,critical access,Logan,ut,\n"
-        "FAC006,Treasure Valley Medical Center,Inpatient Hospital,Boise,Idaho,Idaho\n"
-        "FAC007,Snake River Hospital,Critical Access,Idaho Falls,ID,Idaho\n"
-        "FAC008,High Desert Specialty Clinic,Outpatient Clinic,Las Vegas,Nevada,Nevada\n"
-        "FAC009,Mountain West Surgical Center,ambulatory surgery,Salt Lake City,UT,Wasatch Front\n"
-        "FAC010,Bonneville Family Clinic,Outpatient Clinic,Provo,UT,\n"
-        "FAC011,Summit Cardiology Institute,Specialty Center,Salt Lake City,ut,Wasatch Front\n"
-        "FAC012,Valley Women's & Children's,specialty center,Murray,UT,Wasatch Front\n"
-        "\n"
-    )
+    from profiles.common import build_messy_facility_csv
+    RAW_CSV = build_messy_facility_csv(FACILITY_SEED)   # deterministic messy CSV for this profile
     spark.sql(f"CREATE VOLUME IF NOT EXISTS {CATALOG}.{SCHEMA}.landing")
-    vol_path = f"/Volumes/{CATALOG}/{SCHEMA}/landing/facilities_raw.csv"
+    vol_path = f"/Volumes/{CATALOG}/{SCHEMA}/landing/facilities_raw.{PROFILE_NAME}.csv"
     dbutils.fs.put(vol_path, RAW_CSV, overwrite=True)
-    print(f"Staged messy ETL-lab CSV at {vol_path}")
+    print(f"Staged messy ETL-lab CSV ({PROFILE_NAME}) at {vol_path}")
 else:
-    print("stage_raw_csv=false — skipped (attendees upload etl_lab/facilities_raw.csv themselves).")
+    print("stage_raw_csv=false — skipped (attendees upload the profile's facilities_raw CSV themselves).")

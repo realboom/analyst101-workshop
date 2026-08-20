@@ -14,8 +14,9 @@ Fill this in per client when you instantiate (see `../TEMPLATE.md`). All data is
   AI/BI Assistant auto-join and answer with minimal instructions.
 
 ## ETL lab assets (Foundations half)
-- **Raw file:** `etl_lab/facilities_raw.csv` — a deliberately messy source extract; the medallion
-  lab conforms it into a clean 12-row `dim_facility`.
+- **Raw file:** `etl_lab/facilities_raw.<profile>.csv` (adult / pediatric) — a deliberately messy
+  source extract generated from the chosen profile; the medallion lab conforms it into a clean
+  12-row `dim_facility`.
 - **Per-attendee sandbox schema:** `{{CATALOG}}.analyst101_<user>` (one per attendee). This is where
   they create their `landing` volume and build bronze/silver/gold.
 - **Guides:** `etl_lab/etl_lab_guide.md` (attendee steps), `etl_lab/etl_instructor_notes.md`.
@@ -40,7 +41,7 @@ GRANT ALL PRIVILEGES ON SCHEMA {{CATALOG}}.analyst101_<user> TO `<attendee>`;
 - [ ] Run the data generator into `{{CATALOG}}.{{SCHEMA}}`.
 - [ ] Create a sandbox schema + grants for each attendee (above).
 - [ ] Serverless compute available (Designer + SQL) and a SQL warehouse running.
-- [ ] `etl_lab/facilities_raw.csv` shared with attendees (or pre-staged in a shared volume).
+- [ ] The profile's `etl_lab/facilities_raw.<profile>.csv` shared with attendees (or pre-staged).
 - [ ] Import `dashboard/workshop.lvdash.json`; confirm widgets render.
 - [ ] Create the Genie space; confirm it answers the knee-replacement sample question.
 - [ ] Dry-run the ETL lab end-to-end once (12 clean rows + lineage graph).

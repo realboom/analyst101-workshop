@@ -1,0 +1,15 @@
+Facility ID,Facility Name,Type,City,State,Region
+FAC001,  Wasatch Regional Medical Center ,inpatient hospital,Salt Lake City,Utah,Wasatch Front
+FAC002,Canyon View Hospital,INPATIENT HOSPITAL,Provo,UT ,Wasatch Front
+FAC003,Great Salt Lake Medical Center,Inpatient Hospital,Ogden,ut,Northern Utah
+FAC003,Great Salt Lake Medical Center,inpatient hospital,Ogden ,UT,Northern Utah
+FAC004,Red Rock Regional Hospital,inpatient hospital,St. George,UT,Southern Utah
+FAC005,  Cache Valley Community Hospital ,CRITICAL ACCESS,Logan,Utah,Northern Utah
+FAC006,Treasure Valley Medical Center,Inpatient Hospital,Boise,ID ,Idaho
+FAC007,Snake River Hospital,critical access,Idaho Falls,id,Idaho
+FAC008,High Desert Specialty Clinic,OUTPATIENT CLINIC,Las Vegas,NV,Nevada
+FAC009,  Mountain West Surgical Center ,Ambulatory Surgery,Salt Lake City,Utah,
+FAC010,Bonneville Family Clinic,outpatient clinic,Provo,UT ,
+FAC011,Summit Cardiology Institute,SPECIALTY CENTER,Salt Lake City,ut,Wasatch Front
+FAC012,Valley Women's & Children's,Specialty Center,Murray,UT,Wasatch Front
+
