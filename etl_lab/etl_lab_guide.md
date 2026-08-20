@@ -97,10 +97,6 @@ or **you add them yourself** (Option B).
    then **Run**. *(Choose **Table** as the output type — a materialized view isn't needed here and
    may not be available in every workspace/region.)*
 
-> **Talking point:** you described the *result* in plain English and Genie built the pipeline — then
-> you inspect and edit every step. AI-assisted, fully transparent. Great for analysts who don't want
-> to hand-wire transforms but still want to see (and trust) what's happening.
-
 ### Option B · Build it by hand (operator by operator) — the manual way
 
 **Bronze — bring the raw file in exactly as-is**
