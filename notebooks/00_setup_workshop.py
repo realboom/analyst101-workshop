@@ -11,12 +11,16 @@
 # MAGIC Attach it to **serverless**. No CLI, no local tools, no tokens — the Databricks SDK is
 # MAGIC auto-authenticated inside the notebook.
 # MAGIC
-# MAGIC **How to use:** set the widgets at the top, then run the steps **one at a time**, top to bottom,
-# MAGIC reading each output before moving on.
+# MAGIC **How to use:** run **Step 0a** to create the input widgets, fill them in at the top of the
+# MAGIC notebook, then run **Step 0b** and **Steps 1–6 one at a time**, top to bottom, reading each
+# MAGIC output before moving on.
 
 # COMMAND ----------
 
-# MAGIC %md ## Config — set these widgets, then run this cell
+# MAGIC %md
+# MAGIC ## Step 0a · Create the input widgets
+# MAGIC Run this cell **once**. The eight input boxes appear at the **top of the notebook** — fill them
+# MAGIC in there, then run Step 0b. (For RCH: profile `pediatric`, headline surgery `tonsillectomy` / `42820`.)
 
 # COMMAND ----------
 
@@ -28,6 +32,16 @@ dbutils.widgets.text("procedure_example", "knee replacement", "5. Headline surge
 dbutils.widgets.text("procedure_code", "27447", "6. Its procedure code")
 dbutils.widgets.text("warehouse_id", "", "7. SQL warehouse id (blank = auto-pick serverless)")
 dbutils.widgets.text("attendee_group", "analyst101_attendees", "8. Attendee group (for grants)")
+
+print("Widgets created — scroll to the top of the notebook, fill them in, then run Step 0b.")
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ## Step 0b · Read the inputs + connect
+# MAGIC After filling the widgets at the top, run this to load them, connect via the SDK, and pick a warehouse.
+
+# COMMAND ----------
 
 CATALOG   = dbutils.widgets.get("catalog").strip()
 SCHEMA    = dbutils.widgets.get("schema").strip()
