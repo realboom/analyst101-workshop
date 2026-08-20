@@ -138,7 +138,9 @@ FROM m
 **Step 5 · Add calculated fields (no code).** You don't have to do everything in SQL.
 
 - On the `Provider performance` dataset (or any dataset), in the **Data** tab, add a **calculated measure** with a formula, for example a paid-to-charge ratio: `SUM(total_paid) / SUM(total_charges)`. (Use a dataset that carries `total_paid` and `total_charges` if you want this one, e.g. build it on `fact_encounters`.)
-- Add a **calculated dimension** that bins a field, for example an age band: `CASE WHEN patient_age < 40 THEN '<40' WHEN patient_age < 65 THEN '40-64' ELSE '65+' END`.
+- Add a **calculated dimension** that bins a field, for example an age band. Use the one that fits your dataset's population:
+  - **Adult:** `CASE WHEN patient_age < 40 THEN '<40' WHEN patient_age < 65 THEN '40-64' ELSE '65+' END`
+  - **Pediatric:** `CASE WHEN patient_age < 1 THEN '<1 (infant)' WHEN patient_age < 5 THEN '1-4' WHEN patient_age < 13 THEN '5-12' ELSE '13-18' END`
 - Use them in any visual (as a column, axis, or color). They recompute automatically as filters change.
 
 > **Tableau translation:** `PERCENT_RANK` / `NTILE` replace your rank table calcs; `LAG` and the windowed `AVG` replace the running/difference table calcs and the trailing-average trick; the calculated measure/dimension is your calculated field. They live in the dataset, governed and reusable, instead of per-worksheet.
