@@ -122,9 +122,7 @@ WITH m AS (
   GROUP BY 1
 )
 SELECT month, encounters,
-       encounters - LAG(encounters,1)  OVER (ORDER BY month) AS mom_change,
-       ROUND(100.0*(encounters - LAG(encounters,12) OVER (ORDER BY month))
-             / LAG(encounters,12) OVER (ORDER BY month), 1) AS yoy_pct,
+       encounters - LAG(encounters,1) OVER (ORDER BY month) AS mom_change,
        ROUND(AVG(encounters) OVER (ORDER BY month ROWS BETWEEN 2 PRECEDING AND CURRENT ROW),0)
              AS rolling_3mo,
        ROUND(readmit_rate,1) AS readmit_rate_pct
@@ -134,8 +132,7 @@ FROM m
 - **Canvas** tab → **Add a visualization**. **Dataset:** `Outcome trend`. **Visualization:** Combo (bar + line).
 - **X axis:** `month`.
 - **Bars (left/primary Y):** `encounters`.
-- **Line (right/secondary Y):** `rolling_3mo`.
-- **Optional second line:** `yoy_pct` (it's a percent, so keep it on the secondary axis or put it in its own small chart).
+- **Line (right/secondary Y):** `rolling_3mo` (the smooth trend line).
 - **Sort:** X axis ascending by `month`.
 
 **Step 5 · Add calculated fields (no code).** You don't have to do everything in SQL.
