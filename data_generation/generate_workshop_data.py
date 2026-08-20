@@ -1,9 +1,9 @@
 # Databricks notebook source
 # MAGIC %md
-# MAGIC # {{CLIENT_NAME}} Analyst 101 Workshop — Synthetic Medical Dataset
+# MAGIC # Analyst 101 Workshop — Synthetic Medical Dataset
 # MAGIC
 # MAGIC Generates a realistic (but 100% synthetic, no PHI) hospital/clinic encounters dataset
-# MAGIC for the {{CLIENT_NAME}} Analyst 101 workshop. The schema mirrors the kind of data
+# MAGIC for the Analyst 101 workshop. The schema mirrors the kind of data
 # MAGIC the analysts work with day to day: **something happened** (a diagnosis / procedure),
 # MAGIC **where it happened** (provider + facility), and **the outcome** (readmission,
 # MAGIC mortality, complication) — designed so we can demonstrate:
@@ -360,7 +360,7 @@ print(f"fact_encounters written: {fact.count():,} rows")
 # COMMAND ----------
 
 TABLE_COMMENTS = {
-    "fact_encounters": "One row per patient encounter (inpatient, outpatient, or emergency). Central fact table for the {{CLIENT_NAME}} Analyst 101 workshop. Synthetic data, no PHI.",
+    "fact_encounters": "One row per patient encounter (inpatient, outpatient, or emergency). Central fact table for the Analyst 101 workshop. Synthetic data, no PHI.",
     "dim_provider": "Providers (physicians) with specialty and primary facility. One row per provider.",
     "dim_facility": "Hospitals and clinics with type, city, state, and region. One row per facility.",
     "dim_diagnosis": "ICD-10 diagnosis codes with plain-language descriptions and clinical category. One row per code.",
