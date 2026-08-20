@@ -5,9 +5,10 @@
 builder. Along the way you'll meet the building blocks every Databricks project uses: a
 **catalog**, a **schema**, a **volume**, and the **medallion (bronze → silver → gold)** pattern.
 
-> You'll build everything into **your own sandbox schema** so you can click freely without
-> stepping on anyone else. Your instructor will tell you your schema name — it looks like
-> **`{{CATALOG}}.analyst101_<your-name>`**. Everywhere below that says `analyst101_<you>`, use yours.
+> You'll build everything into **your own schema**, which you create in Step 1, so you can click
+> freely without stepping on anyone else. Pick a schema name based on your own name —
+> **`{{CATALOG}}.analyst101_<your-name>`** (e.g. `analyst101_jchen`). Everywhere below that says
+> `analyst101_<you>`, use yours.
 
 ---
 
@@ -27,10 +28,18 @@ Today: **upload a raw facilities file → bronze → silver → gold `dim_facili
 
 ---
 
-## Step 1 · Create a Volume for the raw file
+## Step 1 · Create your schema and a Volume for the raw file
 
-1. In the left nav, click **Catalog**.
-2. Expand catalog **`{{CATALOG}}`** → your schema **`analyst101_<you>`**.
+First make **your own** schema — this is your personal workspace for the lab and you'll own everything in it.
+
+1. Open a **SQL editor** (left nav → **SQL Editor**) and run, using your own name:
+   ```sql
+   CREATE SCHEMA IF NOT EXISTS {{CATALOG}}.analyst101_<you>;
+   ```
+   (If this errors with a permissions message, tell your instructor — the workshop group needs
+   `CREATE SCHEMA` on `{{CATALOG}}`.)
+2. In the left nav, click **Catalog**, then expand catalog **`{{CATALOG}}`** → your new schema
+   **`analyst101_<you>`**.
 3. Click **Create → Volume**. Name it **`landing`**, leave it a **Managed volume**, **Create**.
 
 > A volume is the right home for a file. You *could* drag a file straight onto the Designer

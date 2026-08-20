@@ -35,14 +35,14 @@ Conventions:
   200 encounters unless the user asks otherwise.
 - Show plain-language names in results (provider_name, facility_name, region,
   clinical_category, procedure_description), not the id columns.
-- "knee replacement" means primary_procedure_code = '27447'.
+- "{{PROCEDURE_EXAMPLE}}" means primary_procedure_code = '{{PROCEDURE_CODE}}'.
 - Round rates to one decimal place and currency to whole dollars.
 ```
 
 ## Sample questions to add (and to ask live)
 1. How many encounters were there in 2024 by region?
 2. Which 10 providers have the highest 30-day readmission rate, with at least 200 encounters?
-3. What is the average length of stay for a knee replacement?
+3. What is the average length of stay for a {{PROCEDURE_EXAMPLE}}?
 4. Show the monthly encounter volume trend for the last 2 years.
 5. Which facilities have the highest complication rate?
 6. Compare mortality rate by clinical category.
@@ -51,7 +51,7 @@ Conventions:
 ## Verified
 On the documented dataset, Genie correctly auto-joined `fact_encounters` to `dim_facility` using the
 foreign key and answered "which facility has the highest 30-day readmission rate (min 500 encounters)"
-without any join hints. Knee-replacement length of stay returns about 2.27 days.
+without any join hints. The profile's headline surgery (`{{PROCEDURE_EXAMPLE}}`) returns a sensible length of stay (e.g. tonsillectomy ≈ 2.4 days on the pediatric profile).
 
 ## Facilitator tips
 - Let a more **skeptical attendee** drive, and always click **Show generated code** so they see the

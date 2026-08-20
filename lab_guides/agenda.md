@@ -36,8 +36,9 @@ segment playbook and the workbook's later parts support this.
 ---
 
 ## What attendees need
-- Access to the workshop Databricks workspace, with a **sandbox schema** each
-  (`{{CATALOG}}.analyst101_<user>`) and SELECT on the shared dataset (`{{CATALOG}}.{{SCHEMA}}`).
+- Access to the workshop Databricks workspace, with rights to **create their own schema** in
+  `{{CATALOG}}` (they make `{{CATALOG}}.analyst101_<user>` in the first ETL step) and SELECT on the
+  shared dataset (`{{CATALOG}}.{{SCHEMA}}`).
 - **Serverless** compute available (Lakeflow Designer runs on it).
 - That's it — no prep required. Bring curiosity and, optionally, a report you'd like to recreate.
 

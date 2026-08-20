@@ -39,18 +39,25 @@ match. This is a genuine ETL lesson, not a Databricks quirk.
 regions. (Validated per profile: `python etl_lab/build_raw_csv.py --all --check` proves the
 documented transforms reproduce each profile's star-schema `dim_facility`.)
 
-## Prerequisites to provision BEFORE the session
+## Prerequisites BEFORE the session (one-time, group-level)
 - **Serverless compute** available in the workspace (Designer runs on serverless).
-- Each attendee has a **sandbox schema** `{{CATALOG}}.analyst101_<user>` and these grants on it:
-  `USE CATALOG` on `{{CATALOG}}`, `USE SCHEMA` + `CREATE VOLUME` + `CREATE TABLE` on their schema.
+- The workshop group has, on `{{CATALOG}}`: `USE CATALOG` + **`CREATE SCHEMA`** (so each attendee
+  can create their own schema in the lab), and `USE SCHEMA` + `SELECT` on the shared schema
+  `{{CATALOG}}.{{SCHEMA}}`. Attendees **create their own** `{{CATALOG}}.analyst101_<user>` schema as
+  ETL Step 1 — they own it, so `CREATE VOLUME` / `CREATE TABLE` on it come automatically. No
+  per-attendee schema provisioning by the instructor.
 - Attendees can reach **Lakeflow / Designer** (Data Engineering entitlement).
 - The profile's `facilities_raw.<profile>.csv` shared with attendees (Slack/email/repo link), OR
   pre-staged in a shared volume they can copy from. The data generator has an optional
   `stage_raw_csv` cell that writes the matching profile's file to a volume as a backup.
 
 ## Common gotchas
-- **"I don't see Create Volume / can't create a table"** → missing `CREATE VOLUME` / `CREATE TABLE`
-  on their schema. Fastest fix: `GRANT ALL PRIVILEGES ON SCHEMA {{CATALOG}}.analyst101_<user> TO <user>;`
+- **"I can't create a schema"** → the workshop group is missing `CREATE SCHEMA` on `{{CATALOG}}`.
+  Fix: `GRANT CREATE SCHEMA ON CATALOG {{CATALOG}} TO \`analyst101_attendees\`;` (then they re-run
+  `CREATE SCHEMA {{CATALOG}}.analyst101_<their-name>`).
+- **"I don't see Create Volume / can't create a table"** → almost always they're pointed at a schema
+  they don't own (e.g. the shared one). Confirm they're in **their own** `analyst101_<user>` schema,
+  which they created and therefore own outright.
 - **"Designer won't start / no compute"** → serverless not enabled or not selected.
 - **Source parsed as one column** → header/delimiter detection; re-open the source pane and
   confirm comma-delimited with header row.

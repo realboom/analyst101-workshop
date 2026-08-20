@@ -23,7 +23,7 @@ Everything lives in `{{CATALOG}}.{{SCHEMA}}`:
 | `dim_provider` | Providers, their specialty, and primary facility. |
 | `dim_facility` | Hospitals and clinics, with type, city, state, region. |
 | `dim_diagnosis` | ICD-10 codes with plain-language descriptions and clinical category. |
-| `dim_procedure` | Procedure codes (incl. 27447 total knee replacement). |
+| `dim_procedure` | Procedure codes (incl. `{{PROCEDURE_CODE}}` {{PROCEDURE_EXAMPLE}}). |
 | `dim_patient` | Patients with their assigned PCP and home facility (used for the PCP-continuity metric). |
 | `dim_visit_type` | Visit type reference; non-standard types are excluded from PCP continuity. |
 
@@ -325,7 +325,7 @@ Conventions:
   200 encounters unless the user asks otherwise.
 - Show plain-language names in results (provider_name, facility_name, region,
   clinical_category, procedure_description), not the id columns.
-- "knee replacement" means primary_procedure_code = '27447'.
+- "{{PROCEDURE_EXAMPLE}}" means primary_procedure_code = '{{PROCEDURE_CODE}}'.
 - Round rates to one decimal place and currency to whole dollars.
 ```
 
@@ -333,7 +333,7 @@ Conventions:
 
 - "How many encounters were there in 2024 by region?"
 - "Which providers have the highest 30-day readmission rate, with at least 200 encounters?"
-- "What is the average length of stay for a knee replacement?"
+- "What is the average length of stay for a {{PROCEDURE_EXAMPLE}}?"
 
 **Step 5 · Show the SQL.** On any answer, click **Show generated code** to see the Databricks SQL Genie wrote.
 
@@ -363,7 +363,7 @@ Pick a scenario (yours, or one below) and build it. Instructors will float to he
 | Scenario | Good for practicing | Starter query (adapt freely) |
 |---|---|---|
 | Provider outcomes scorecard | aggregation, ranking, thresholds | `SELECT p.provider_name, COUNT(*) enc, ROUND(100.0*SUM(e.complication_flag)/COUNT(*),1) comp_rate FROM {{CATALOG}}.{{SCHEMA}}.fact_encounters e JOIN {{CATALOG}}.{{SCHEMA}}.dim_provider p USING(provider_id) GROUP BY 1 HAVING enc>200 ORDER BY comp_rate DESC` |
-| Knee replacement deep-dive | filtering to a procedure, trend | filter `primary_procedure_code = '27447'`; trend LOS and readmit over time; split by facility |
+| {{PROCEDURE_EXAMPLE}} deep-dive | filtering to a procedure, trend | filter `primary_procedure_code = '{{PROCEDURE_CODE}}'`; trend LOS and readmit over time; split by facility |
 | Cost vs. outcome | two measures, scatter | `SELECT f.facility_name, AVG(e.total_paid) avg_paid, 100.0*SUM(e.readmitted_30d)/COUNT(*) readmit_rate FROM {{CATALOG}}.{{SCHEMA}}.fact_encounters e JOIN {{CATALOG}}.{{SCHEMA}}.dim_facility f USING(facility_id) GROUP BY 1` |
 | Payer mix by region | stacked bar, categorical split | `SELECT f.region, e.payer_type, COUNT(*) enc FROM {{CATALOG}}.{{SCHEMA}}.fact_encounters e JOIN {{CATALOG}}.{{SCHEMA}}.dim_facility f USING(facility_id) GROUP BY 1,2` |
 | Genie-first | NL querying, then save to dashboard | ask the Genie space, then add a good answer to a dashboard |

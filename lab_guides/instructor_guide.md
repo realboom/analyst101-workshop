@@ -49,7 +49,7 @@ rabbit-hole.
 - [ ] Dashboard imported (`dashboard/{{SCHEMA}}.lvdash.json`) and every widget renders.
 - [ ] Confirm you can publish a dashboard and create a Genie space from it in this workspace
       (so the live Day-1 flow works), and have the paste-in instructions block handy.
-- [ ] (Backup) Pre-built standalone Genie space created and answers the knee-replacement question,
+- [ ] (Backup) Pre-built standalone Genie space created and answers the {{PROCEDURE_EXAMPLE}} question,
       in case the live publish step hiccups.
 - [ ] Slide deck open and ready to present.
 - [ ] Decide: do attendees each clone the starter dashboard, or build their own from scratch?
@@ -215,7 +215,7 @@ knows how to join things. We just add a few instructions on top."
 4. Let the **attendees drive**. Have them ask a few:
    - "How many encounters were there in 2024 by region?"
    - "Which providers have the highest 30-day readmission rate, with at least 200 encounters?"
-   - "What is the average length of stay for a knee replacement?"
+   - "What is the average length of stay for a {{PROCEDURE_EXAMPLE}}?"
 5. On each answer, click **Show generated code** so they see the Databricks SQL.
 
 **Point out (skeptic-focused):**
