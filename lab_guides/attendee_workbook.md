@@ -1,7 +1,7 @@
-# Attendee Workbook - {{CLIENT_NAME}} Analyst 101 Workshop (AI/BI half)
+# Attendee Workbook - Analyst 101 Workshop (AI/BI half)
 
 Welcome. This is the **AI/BI half** of the workshop — building dashboards and asking questions in
-plain language with Genie, on a shared synthetic {{INDUSTRY_FLAVOR}} dataset. It picks up right
+plain language with Genie, on a shared synthetic dataset. It picks up right
 after the **Foundations + ETL lab** (`etl_lab/etl_lab_guide.md`), where you built a governed
 `dim_facility` table from a raw file. Now we use tables like it. Follow along on your own screen,
 and ask questions any time.
@@ -72,7 +72,7 @@ The key idea: a dataset is **full Databricks SQL**. The things you do with table
 
 **Step 1 · Create the dashboard.**
 
-- In the left nav, click **Dashboards**, then **Create dashboard**. Name it "My {{CLIENT_NAME}} Workshop".
+- In the left nav, click **Dashboards**, then **Create dashboard**. Name it "My Analyst 101 Workshop".
 - You'll open on the **Canvas** tab, with a **Data** tab right next to it at the top.
 
 **Step 2 · Create the `Provider performance` dataset.** This ranks providers by risk outcome with a percentile and quartile (min 200 encounters).
