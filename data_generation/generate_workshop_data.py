@@ -60,16 +60,18 @@ print(f"Generating {NUM_ENCOUNTERS:,} encounters into {CATALOG}.{SCHEMA}")
 
 # COMMAND ----------
 
-# Create the target catalog if it does not already exist. On some metastores (Default
-# Storage enabled with no managed location) creating a brand-new catalog fails with
-# "Metastore storage root URL does not exist". If you hit that, create the catalog once
-# in the Catalog UI (Catalog > Create catalog) or with an explicit MANAGED LOCATION, then
-# re-run. If the catalog already exists, this is a no-op.
-try:
-    spark.sql(f"CREATE CATALOG IF NOT EXISTS {CATALOG}")
-except Exception as e:
-    print(f"Could not auto-create catalog '{CATALOG}'. If it does not already exist, create "
-          f"it once in the Catalog UI (or with a MANAGED LOCATION) and re-run. Details: {e}")
+# Ensure the target catalog exists. If it already exists, do nothing (no misleading warning).
+# If it is missing, try to auto-create it — but on metastores with no default storage root,
+# CREATE CATALOG without a location fails ("Metastore storage root URL does not exist"); in that
+# case stop with a clear, actionable message rather than continuing into confusing errors.
+if spark.sql(f"SHOW CATALOGS LIKE '{CATALOG}'").count() == 0:
+    try:
+        spark.sql(f"CREATE CATALOG IF NOT EXISTS {CATALOG}")
+    except Exception as e:
+        raise Exception(
+            f"Catalog '{CATALOG}' does not exist and could not be auto-created (no default storage "
+            f"root). Create it once in the Catalog UI (Catalog > Create catalog) or with an explicit "
+            f"MANAGED LOCATION, then re-run. Details: {e}")
 spark.sql(f"CREATE SCHEMA IF NOT EXISTS {CATALOG}.{SCHEMA}")
 spark.sql(f"USE {CATALOG}.{SCHEMA}")
 
