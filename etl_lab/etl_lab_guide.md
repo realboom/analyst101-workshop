@@ -78,8 +78,7 @@ organized. Everything you build lives in **your own** schema, which you'll own.
 
 You're turning the messy file into a clean 12-row `dim_facility`. Do it **either** way below. The
 transformations are the same; the difference is whether **Genie writes the steps for you** (Option A)
-or **you add them yourself** (Option B). If you're demoing, show Option A first — it's the wow moment —
-then open the generated steps to show it's not a black box.
+or **you add them yourself** (Option B).
 
 ### Option A · Prompt Genie to build it (AI-assisted) — the fast way
 
