@@ -93,8 +93,9 @@ or **you add them yourself** (Option B).
    > facility_id, facility_name, facility_type, city, state, region.
 3. **Review the steps Genie generated** — each shows a live preview. Tweak anything that's off
    (this is the point: you can inspect and edit every step).
-4. Set the output table to **`dim_facility`** in **`{{CATALOG}}.analyst101_<you>`** (Materialized),
-   then **Run**.
+4. Set the output to a **Table** named **`dim_facility`** in **`{{CATALOG}}.analyst101_<you>`**,
+   then **Run**. *(Choose **Table** as the output type — a materialized view isn't needed here and
+   may not be available in every workspace/region.)*
 
 > **Talking point:** you described the *result* in plain English and Genie built the pipeline — then
 > you inspect and edit every step. AI-assisted, fully transparent. Great for analysts who don't want
@@ -128,7 +129,7 @@ or **you add them yourself** (Option B).
    `MAX(Region)` (or first non-null) **partitioned by `City`**, applied where `Region` is blank. **No more blanks.**
 2. **Rename to snake_case**: `Facility ID→facility_id`, `Facility Name→facility_name`,
    `Type→facility_type`, `City→city`, `State→state`, `Region→region`.
-3. **Set the output** to a **Materialized** table **`dim_facility`** in **`{{CATALOG}}.analyst101_<you>`**, then **Run**.
+3. **Set the output** to a **Table** named **`dim_facility`** in **`{{CATALOG}}.analyst101_<you>`**, then **Run**. *(Pick **Table** as the type — materialized view isn't needed and may not be available in every workspace.)*
 
 ## Step 5 · Verify + the governance payoff
 
