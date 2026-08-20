@@ -40,7 +40,8 @@ the ratio is realistic and varies by facility, ~55–90%).
    SELECT {{CATALOG}}.{{SCHEMA}}.pcp_continuity_ratio();                     -- overall ratio
    SELECT * FROM {{CATALOG}}.{{SCHEMA}}.pcp_continuity_by_provider()
      ORDER BY continuity_ratio DESC;                                          -- rank providers
-   SELECT * FROM {{CATALOG}}.{{SCHEMA}}.pcp_continuity_metrics;               -- metric view
+   SELECT `Facility`, MEASURE(`PCP Continuity Ratio`)                         -- metric view
+     FROM {{CATALOG}}.{{SCHEMA}}.pcp_continuity_metrics GROUP BY `Facility`;   -- measures need MEASURE()
    ```
 4. In a Genie space over `{{CATALOG}}.{{SCHEMA}}`, add the metric view and the functions as
    **trusted assets / example SQL** (see `../genie/genie_space_config.md` for the base space).

@@ -40,7 +40,7 @@ JOIN {{CATALOG}}.{{SCHEMA}}.dim_provider    pr ON e.provider_id    = pr.provider
 
 -- 2) Governed metric view: define the continuity ratio ONCE ----------------------------------
 CREATE OR REPLACE VIEW {{CATALOG}}.{{SCHEMA}}.pcp_continuity_metrics
-(Facility, Facility Code, Region, Encounter Month, Total Standard Visits, PCP Matched Visits, PCP Continuity Ratio)
+(`Facility`, `Facility Code`, `Region`, `Encounter Month`, `Total Standard Visits`, `PCP Matched Visits`, `PCP Continuity Ratio`)
 COMMENT 'Governed PCP continuity metrics over STANDARD visits only. Define the ratio once; every dashboard, notebook, and Genie Space computes it identically.'
 WITH METRICS
 LANGUAGE YAML
@@ -126,5 +126,6 @@ RETURN
 --   SELECT {{CATALOG}}.{{SCHEMA}}.standard_visit_count();                 -- standard visit count
 --   SELECT * FROM {{CATALOG}}.{{SCHEMA}}.pcp_continuity_by_provider()
 --     ORDER BY continuity_ratio DESC;                                     -- rank providers
---   SELECT * FROM {{CATALOG}}.{{SCHEMA}}.pcp_continuity_metrics;          -- metric view
+--   SELECT `Facility`, MEASURE(`PCP Continuity Ratio`)                    -- metric view: measures
+--     FROM {{CATALOG}}.{{SCHEMA}}.pcp_continuity_metrics GROUP BY `Facility`;  -- must be wrapped in MEASURE()
 -- ---------------------------------------------------------------------------------------------
