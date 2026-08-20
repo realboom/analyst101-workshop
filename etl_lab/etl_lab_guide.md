@@ -28,23 +28,30 @@ Today: **upload a raw facilities file → bronze → silver → gold `dim_facili
 
 ---
 
-## Step 1 · Create your schema and a Volume for the raw file
+## Step 1 · Create your schema and a Volume (in Catalog Explorer)
 
-First make **your own** schema — this is your personal workspace for the lab and you'll own everything in it.
+You'll do this in the **Catalog** UI — no code — so you get a feel for how Unity Catalog is
+organized. Everything you build lives in **your own** schema, which you'll own.
 
-1. Open a **SQL editor** (left nav → **SQL Editor**) and run, using your own name:
-   ```sql
-   CREATE SCHEMA IF NOT EXISTS {{CATALOG}}.analyst101_<you>;
-   ```
-   (If this errors with a permissions message, tell your instructor — the workshop group needs
-   `CREATE SCHEMA` on `{{CATALOG}}`.)
-2. In the left nav, click **Catalog**, then expand catalog **`{{CATALOG}}`** → your new schema
-   **`analyst101_<you>`**.
-3. Click **Create → Volume**. Name it **`landing`**, leave it a **Managed volume**, **Create**.
+**1.1 · Create your schema**
 
-> A volume is the right home for a file. You *could* drag a file straight onto the Designer
-> canvas (it uploads to a volume for you), but creating one yourself is worth doing once so you
-> know what a volume is.
+1. In the left nav, click **Catalog**.
+2. Find and click the catalog **`{{CATALOG}}`**.
+3. Click **Create schema** (top-right of the catalog page).
+4. Name it **`analyst101_<you>`** (use your own name, e.g. `analyst101_jchen`), leave the storage
+   location as the default, and click **Create**.
+
+> If **Create schema** is greyed out or you get a permission error, tell your instructor — the
+> workshop group needs `CREATE SCHEMA` on `{{CATALOG}}`.
+
+**1.2 · Create a `landing` volume**
+
+1. Open your new schema **`{{CATALOG}}.analyst101_<you>`**.
+2. Click **Create → Volume** (top-right).
+3. Name it **`landing`**, leave it a **Managed volume**, and click **Create**.
+
+> A **volume** is the governed home for **files** (CSVs, images, PDFs) — it's where your raw file
+> lands before it becomes a table. Creating one yourself once is worth doing so you know what it is.
 
 ## Step 2 · Upload the raw file
 
@@ -57,10 +64,10 @@ First make **your own** schema — this is your personal workspace for the lab a
    capitalization, two rows with a **blank Region**, a **duplicate** facility row, and a trailing
    empty line. This is what real source extracts look like. Our job is to fix it.
 
-## Step 3 · Open Lakeflow Designer and start a build
+## Step 3 · Open Lakeflow Designer (Visual Data Prep) and start a build
 
-1. Left nav → **Data Engineering → Lakeflow** (or search **"Designer"** in the top search bar).
-2. Click **New → Visual data prep**. Name it **`facilities_medallion`**.
+1. Left nav → **Data Engineering → Visual Data Prep**. *(This is the Lakeflow Designer visual, no-code ETL builder — under Data Engineering you'll see **Runs**, **Data Ingestion**, and **Visual Data Prep**; pick the last one.)*
+2. Click **Create** (or **New**) to start a pipeline; name it **`facilities_medallion`**.
 3. You get a blank canvas. You build a pipeline by adding **operators** and connecting them.
 
 ## Step 4 · Bronze — bring the raw file in exactly as-is
