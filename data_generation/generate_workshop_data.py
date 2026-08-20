@@ -463,7 +463,9 @@ NOT_NULL = {
 for tbl, col in NOT_NULL.items():
     spark.sql(f"ALTER TABLE {tbl} ALTER COLUMN {col} SET NOT NULL")
 
-# 2) Primary keys (drop-if-exists pattern keeps the notebook re-runnable).
+# 2) Primary + foreign keys. Order matters for re-runs: a PK can't be dropped while child FKs still
+#    reference it, so we (a) drop all FKs first, (b) re-create the PKs, (c) re-create the FKs. This
+#    keeps the notebook fully re-runnable — the naive "drop PKs then FKs" order fails on the 2nd run.
 PRIMARY_KEYS = {
     "dim_provider": ("pk_dim_provider", "provider_id"),
     "dim_facility": ("pk_dim_facility", "facility_id"),
@@ -473,11 +475,6 @@ PRIMARY_KEYS = {
     "dim_visit_type": ("pk_dim_visit_type", "visit_type_id"),
     "fact_encounters": ("pk_fact_encounters", "encounter_id"),
 }
-for tbl, (name, col) in PRIMARY_KEYS.items():
-    spark.sql(f"ALTER TABLE {tbl} DROP CONSTRAINT IF EXISTS {name}")
-    spark.sql(f"ALTER TABLE {tbl} ADD CONSTRAINT {name} PRIMARY KEY ({col})")
-
-# 3) Foreign keys (fact -> dims, provider -> facility, patient -> pcp/facility).
 FOREIGN_KEYS = [
     ("fact_encounters", "fk_enc_provider",   "provider_id",            "dim_provider",   "provider_id"),
     ("fact_encounters", "fk_enc_facility",   "facility_id",            "dim_facility",   "facility_id"),
@@ -489,8 +486,15 @@ FOREIGN_KEYS = [
     ("dim_patient",     "fk_patient_pcp",       "assigned_pcp_id",     "dim_provider",   "provider_id"),
     ("dim_patient",     "fk_patient_facility",  "home_facility_id",    "dim_facility",   "facility_id"),
 ]
-for tbl, name, col, ref_tbl, ref_col in FOREIGN_KEYS:
+# (a) drop child FKs first (IF EXISTS — safe on the first run too)
+for tbl, name, *_ in FOREIGN_KEYS:
     spark.sql(f"ALTER TABLE {tbl} DROP CONSTRAINT IF EXISTS {name}")
+# (b) (re)create primary keys — now nothing references them
+for tbl, (name, col) in PRIMARY_KEYS.items():
+    spark.sql(f"ALTER TABLE {tbl} DROP CONSTRAINT IF EXISTS {name}")
+    spark.sql(f"ALTER TABLE {tbl} ADD CONSTRAINT {name} PRIMARY KEY ({col})")
+# (c) (re)create foreign keys
+for tbl, name, col, ref_tbl, ref_col in FOREIGN_KEYS:
     spark.sql(f"ALTER TABLE {tbl} ADD CONSTRAINT {name} FOREIGN KEY ({col}) REFERENCES {ref_tbl} ({ref_col})")
 
 print("Primary keys and foreign keys applied. Dataset fully documented and ready.")
