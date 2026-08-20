@@ -68,57 +68,70 @@ organized. Everything you build lives in **your own** schema, which you'll own.
 
 1. Left nav → **Data Engineering → Visual Data Prep**. *(This is the Lakeflow Designer visual, no-code ETL builder — under Data Engineering you'll see **Runs**, **Data Ingestion**, and **Visual Data Prep**; pick the last one.)*
 2. Click **Create** (or **New**) to start a pipeline; name it **`facilities_medallion`**.
-3. You get a blank canvas. You build a pipeline by adding **operators** and connecting them.
+3. You land on a **start screen** with a **Genie prompt box** and tiles like **Select a source**,
+   **Upload a file**, **Load a sample**, and **try a Genie code prompt**. From here there are **two
+   ways to build** — pick one in Step 4:
+   - **Option A — prompt Genie** to build the pipeline for you (the fast, AI-assisted way), or
+   - **Option B — build it by hand**, adding operators one at a time.
 
-## Step 4 · Bronze — bring the raw file in exactly as-is
+## Step 4 · Build bronze → silver → gold — two ways
 
-1. Click **Select source operator** (or **+ → Source**).
-2. Choose **Browse** and navigate to `{{CATALOG}}.analyst101_<you>.landing` → your
-   **`facilities_raw.<profile>.csv`** (or **Ingest a folder/volume** and point at the `landing`
-   volume — Designer auto-detects CSV).
-3. In the source pane, confirm it parsed into columns (`Facility ID`, `Facility Name`, `Type`,
-   `City`, `State`, `Region`). Leave everything raw — **no cleaning yet**. Click **Apply**.
-4. This is your **bronze** layer: the source, faithfully. You should see ~13 rows (the dupe and
-   the blank line are still here — that's expected).
+You're turning the messy file into a clean 12-row `dim_facility`. Do it **either** way below. The
+transformations are the same; the difference is whether **Genie writes the steps for you** (Option A)
+or **you add them yourself** (Option B). If you're demoing, show Option A first — it's the wow moment —
+then open the generated steps to show it's not a black box.
 
-> **Talking point:** bronze is deliberately un-touched. If a question comes up later about what
-> the source actually sent, bronze is the receipt.
+### Option A · Prompt Genie to build it (AI-assisted) — the fast way
 
-## Step 5 · Silver — clean and conform
+1. On the start screen, choose **Select a source** and point at your `landing` volume's
+   **`facilities_raw.<profile>.csv`** so Genie has the data in front of it.
+2. In the **Genie prompt box**, describe the outcome in plain English and let Genie generate the
+   transformation steps. Paste something like:
+   > Clean this facilities CSV into a table called **dim_facility**. Trim whitespace on all text
+   > columns. Standardize **State** to a 2-letter US state code (e.g. Utah → UT). Proper-case **Type**.
+   > Drop rows where **Facility ID** is blank. Remove duplicate rows by **Facility ID**. Fill any
+   > blank **Region** from another facility in the same **City**. Rename columns to snake_case:
+   > facility_id, facility_name, facility_type, city, state, region.
+3. **Review the steps Genie generated** — each shows a live preview. Tweak anything that's off
+   (this is the point: you can inspect and edit every step).
+4. Set the output table to **`dim_facility`** in **`{{CATALOG}}.analyst101_<you>`** (Materialized),
+   then **Run**.
 
-Add transform operators one at a time (each shows a live preview so you see the effect):
+> **Talking point:** you described the *result* in plain English and Genie built the pipeline — then
+> you inspect and edit every step. AI-assisted, fully transparent. Great for analysts who don't want
+> to hand-wire transforms but still want to see (and trust) what's happening.
 
-1. **Trim whitespace** — add a **Transform / Clean** step and trim leading/trailing spaces on
-   `Facility Name`, `Type`, `City`, `State`, `Region`. (Watch the padded names snap into place.)
-2. **Standardize `State` to a 2-letter code** — add a **derived / case** expression: uppercase
-   `State`, then map any full state name to its code (e.g. `UTAH→UT`, `CALIFORNIA→CA`) using a
-   standard US-state lookup; leave already-good codes. Now every row is a clean 2-letter code.
-3. **Proper-case `Type`** — apply title-case so e.g. `pediatric clinic`, `PEDIATRIC CLINIC`, and
-   `Pediatric Clinic` all become one value: **`Pediatric Clinic`**.
-4. **Drop empty rows** — add a **Filter** that removes rows where `Facility ID` is null/blank
-   (kills the trailing empty line).
-5. **De-duplicate** — add a **Remove duplicates / Deduplicate** step keyed on **`Facility ID`**.
-   The duplicated facility row collapses to one. (Notice we standardized *first*, so the duplicate
-   is a true duplicate by the time we dedupe.)
+### Option B · Build it by hand (operator by operator) — the manual way
 
-You now have a **silver** result: **12 clean, conformed rows** — but two of them still have a
-blank `Region`.
+**Bronze — bring the raw file in exactly as-is**
 
-## Step 6 · Gold — make it business-ready `dim_facility`
+1. Click **Select a source** and point at `{{CATALOG}}.analyst101_<you>.landing` →
+   **`facilities_raw.<profile>.csv`** (Designer auto-detects CSV).
+2. Confirm it parsed into columns (`Facility ID`, `Facility Name`, `Type`, `City`, `State`,
+   `Region`). Leave everything raw — **no cleaning yet**. You should see ~13 rows (the dupe and the
+   blank line are still here — expected). *Bronze is the source, faithfully — the receipt of what arrived.*
 
-1. **Fill the missing `Region`** — the two blank-region rows each share a **City** with another
-   facility that *does* have a region. Fill the blank from that same-city sibling: add a
-   **window / group** step that takes `MAX(Region)` (or first non-null) **partitioned by `City`**,
-   and use it where `Region` is blank. Data fills the gap — no hand-typed lookup needed.
-   **No more blanks.**
-2. **Rename to the final schema** (snake_case) so it matches how tables are named here:
-   `Facility ID→facility_id`, `Facility Name→facility_name`, `Type→facility_type`,
-   `City→city`, `State→state`, `Region→region`.
-3. **Set the output / destination**: write to a table named **`dim_facility`** in
-   **`{{CATALOG}}.analyst101_<you>`**. Choose **Materialized** (a managed table).
-4. Click **Run** (or **Publish + Run**). Designer generates the pipeline and runs it.
+**Silver — clean and conform** (add transform steps one at a time; each shows a live preview):
 
-## Step 7 · Verify + the governance payoff
+1. **Trim whitespace** on `Facility Name`, `Type`, `City`, `State`, `Region`.
+2. **Standardize `State` to a 2-letter code** — uppercase `State`, then map full names to codes
+   (e.g. `UTAH→UT`, `CALIFORNIA→CA`); leave good codes alone.
+3. **Proper-case `Type`** — title-case so `pediatric clinic` / `PEDIATRIC CLINIC` / `Pediatric Clinic`
+   all become **`Pediatric Clinic`**.
+4. **Drop empty rows** — filter out rows where `Facility ID` is null/blank (kills the trailing line).
+5. **De-duplicate** on **`Facility ID`** (standardize *first*, so the duplicate is a true dupe by now).
+
+→ **12 clean, conformed rows** — but two still have a blank `Region`.
+
+**Gold — make it business-ready `dim_facility`**
+
+1. **Fill the missing `Region`** from a same-`City` sibling: a **window/group** step taking
+   `MAX(Region)` (or first non-null) **partitioned by `City`**, applied where `Region` is blank. **No more blanks.**
+2. **Rename to snake_case**: `Facility ID→facility_id`, `Facility Name→facility_name`,
+   `Type→facility_type`, `City→city`, `State→state`, `Region→region`.
+3. **Set the output** to a **Materialized** table **`dim_facility`** in **`{{CATALOG}}.analyst101_<you>`**, then **Run**.
+
+## Step 5 · Verify + the governance payoff
 
 1. Back in **Catalog**, open `{{CATALOG}}.analyst101_<you>.dim_facility`. Confirm **12 rows**,
    clean `state` codes, proper-cased `facility_type`, and **no blank regions**.
