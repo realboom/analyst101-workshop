@@ -94,8 +94,9 @@ or **you add them yourself** (Option B).
 3. **Review the steps Genie generated** — each shows a live preview. Tweak anything that's off
    (this is the point: you can inspect and edit every step).
 4. Set the output to a **Table** named **`dim_facility`** in **`{{CATALOG}}.analyst101_<you>`**,
-   then **Run**. *(Choose **Table** as the output type — a materialized view isn't needed here and
-   may not be available in every workspace/region.)*
+   with mode **Create/replace**, then **Run**. *(Output type **Table** — a materialized view isn't
+   needed here and may not be available in every workspace/region. Mode **Create/replace** rebuilds the
+   full table each run; merge/append are for incremental loads, not this full-file build.)*
 
 ### Option B · Build it by hand (operator by operator) — the manual way
 
@@ -125,7 +126,7 @@ or **you add them yourself** (Option B).
    `MAX(Region)` (or first non-null) **partitioned by `City`**, applied where `Region` is blank. **No more blanks.**
 2. **Rename to snake_case**: `Facility ID→facility_id`, `Facility Name→facility_name`,
    `Type→facility_type`, `City→city`, `State→state`, `Region→region`.
-3. **Set the output** to a **Table** named **`dim_facility`** in **`{{CATALOG}}.analyst101_<you>`**, then **Run**. *(Pick **Table** as the type — materialized view isn't needed and may not be available in every workspace.)*
+3. **Set the output** to a **Table** named **`dim_facility`** in **`{{CATALOG}}.analyst101_<you>`**, mode **Create/replace**, then **Run**. *(Table type + Create/replace rebuilds the full 12-row dim each run; merge/append are for incremental loads, not this full-file build.)*
 
 ## Step 5 · Verify + the governance payoff
 
