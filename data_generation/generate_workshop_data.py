@@ -234,6 +234,26 @@ start = date.fromisoformat(START_DATE)
 end = date.fromisoformat(END_DATE)
 span_days = (end - start).days
 
+# --- monthly volume curve: YoY growth + seasonality, so trends and forecasts aren't flat ---
+import calendar
+ANNUAL_GROWTH = 0.10  # ~+10% year over year
+# seasonal multiplier by calendar month (Jan..Dec); profile-aware
+_SEASONAL = {
+    "pediatric": [1.30, 1.20, 1.05, 0.90, 0.80, 0.75, 0.75, 0.80, 0.95, 1.10, 1.25, 1.35],  # winter respiratory peak
+    "adult":     [1.10, 1.05, 1.00, 0.98, 0.97, 0.95, 0.95, 0.97, 1.00, 1.03, 1.05, 1.08],  # mild winter bump
+}
+_seasonal = _SEASONAL.get(PROFILE_NAME, _SEASONAL["adult"])
+# one weighted bucket per calendar month in [start, end]
+_month_lo, _month_hi, _month_wt = [], [], []
+_y, _m, _idx = start.year, start.month, 0
+while (_y, _m) <= (end.year, end.month):
+    _month_lo.append(max(date(_y, _m, 1), start).toordinal())
+    _month_hi.append(min(date(_y, _m, calendar.monthrange(_y, _m)[1]), end).toordinal())
+    _month_wt.append(((1 + ANNUAL_GROWTH) ** (_idx / 12.0)) * _seasonal[_m - 1])
+    _idx += 1
+    _y, _m = (_y + 1, 1) if _m == 12 else (_y, _m + 1)
+_month_ix = list(range(len(_month_wt)))
+
 def gen_row(i):
     rnd = random.random
     icd = random.choice(diag_codes)
@@ -269,9 +289,13 @@ def gen_row(i):
 
     age = min(AGE["max"], max(AGE["min"], int(random.gauss(AGE["mean"], AGE["std"]))))
 
-    # cap the admit offset so discharge (admit + los) never spills past END_DATE
-    admit_offset = random.randint(0, max(0, span_days - los))
-    admit = start.toordinal() + admit_offset
+    # place the encounter in a month drawn from the volume curve (growth + seasonality),
+    # then a random day within it — capped so discharge (admit + los) never spills past END_DATE
+    _b = random.choices(_month_ix, weights=_month_wt)[0]
+    _lo, _hi = _month_lo[_b], min(_month_hi[_b], end.toordinal() - los)
+    if _hi < _lo:
+        _hi = _lo
+    admit = random.randint(_lo, _hi)
     admit_date = date.fromordinal(admit)
     discharge_date = date.fromordinal(admit + los)
 
