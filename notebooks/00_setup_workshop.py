@@ -110,24 +110,29 @@ display(spark.sql(f"SHOW TABLES IN {CATALOG}.{SCHEMA}"))
 # COMMAND ----------
 
 def split_sql(text):
-    """Split a .sql file into statements: strip -- line comments, respect $$ dollar-quoting, split on ;"""
+    """Split a .sql file into statements. Strips -- line comments and splits on ';', but never
+    inside a $$...$$ block or a '...' string (so semicolons in COMMENT text / YAML don't mis-split)."""
     lines = [ln for ln in text.splitlines() if not ln.strip().startswith("--")]
     text = "\n".join(lines)
-    stmts, buf, in_dollar = [], [], False
-    i = 0
-    while i < len(text):
-        if text[i:i+2] == "$$":
+    stmts, buf = [], []
+    in_dollar = in_str = False
+    i, n = 0, len(text)
+    while i < n:
+        if not in_str and text[i:i+2] == "$$":      # toggle $$ dollar-quote block
             in_dollar = not in_dollar
             buf.append("$$"); i += 2; continue
         c = text[i]
-        if c == ";" and not in_dollar:
+        if not in_dollar and c == "'":              # toggle single-quoted string ('' = escaped quote)
+            if in_str and text[i+1:i+2] == "'":
+                buf.append("''"); i += 2; continue
+            in_str = not in_str
+            buf.append(c); i += 1; continue
+        if c == ";" and not in_dollar and not in_str:
             s = "".join(buf).strip()
             if s:
                 stmts.append(s)
-            buf = []
-        else:
-            buf.append(c)
-        i += 1
+            buf = []; i += 1; continue
+        buf.append(c); i += 1
     if "".join(buf).strip():
         stmts.append("".join(buf).strip())
     return stmts
