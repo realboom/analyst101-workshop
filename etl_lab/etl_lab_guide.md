@@ -80,6 +80,10 @@ You're turning the messy file into a clean 12-row `dim_facility`. Do it **either
 transformations are the same; the difference is whether **Genie writes the steps for you** (Option A)
 or **you add them yourself** (Option B).
 
+> **Bronze → silver → gold here are stages in one pipeline, not three separate tables.** Bronze is the
+> raw read, silver is the cleaning/conforming, and the only table you save is the **gold**
+> `dim_facility` — the business-ready dimension your dashboards and Genie read.
+
 ### Option A · Prompt Genie to build it (AI-assisted) — the fast way
 
 1. On the start screen, choose **Select a source** and point at your `landing` volume's
