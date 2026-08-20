@@ -31,7 +31,7 @@ dbutils.widgets.text("client_name", "Acme Health", "4. Client display name")
 dbutils.widgets.text("procedure_example", "knee replacement", "5. Headline surgery (demo example)")
 dbutils.widgets.text("procedure_code", "27447", "6. Its procedure code")
 dbutils.widgets.text("warehouse_id", "", "7. SQL warehouse id (blank = auto-pick serverless)")
-dbutils.widgets.text("attendee_group", "analyst101_attendees", "8. Attendee group (for grants)")
+dbutils.widgets.text("attendee_group", "analyst101_attendees", "8. Attendee group OR emails (comma-sep; must already exist)")
 
 print("Widgets created — scroll to the top of the notebook, fill them in, then run Step 0b.")
 
@@ -259,22 +259,31 @@ print(f"✅ Genie space created: {host}/genie/rooms/{SPACE_ID}")
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## Step 5 · Grant the attendee group (one-time)
-# MAGIC Lets attendees create their own ETL schema and read the shared dataset. Edit the group widget
-# MAGIC if your group has a different name. (Skips gracefully if the group doesn't exist yet.)
+# MAGIC ## Step 5 · Grant the attendees (one-time)
+# MAGIC Lets attendees create their own ETL schema and read the shared dataset.
+# MAGIC
+# MAGIC **The grantee must already exist.** A **group** is an identity object — create it first in
+# MAGIC **Admin Console → Identity and access → Groups** (or via SCIM/Terraform) and add the attendees;
+# MAGIC there is no `CREATE GROUP` in SQL. The `attendee_group` widget accepts **either** a group name
+# MAGIC **or** a comma-separated list of user emails.
+# MAGIC
+# MAGIC > **Solo rehearsal?** You can **skip this cell** (it only affects attendee access, not the build),
+# MAGIC > or put your own email in the widget to confirm the GRANT SQL runs.
 
 # COMMAND ----------
 
-grants = [
-    f"GRANT USE CATALOG ON CATALOG {CATALOG} TO `{GROUP}`",
-    f"GRANT CREATE SCHEMA ON CATALOG {CATALOG} TO `{GROUP}`",
-    f"GRANT USE SCHEMA, SELECT ON SCHEMA {CATALOG}.{SCHEMA} TO `{GROUP}`",
-]
-for g in grants:
+principals = [p.strip() for p in GROUP.split(",") if p.strip()]
+if not principals:
+    print("No attendee group/emails set — skipping grants (fine for a solo rehearsal).")
+for principal in principals:
     try:
-        spark.sql(g); print("✅", g)
+        for g in [f"GRANT USE CATALOG ON CATALOG {CATALOG} TO `{principal}`",
+                  f"GRANT CREATE SCHEMA ON CATALOG {CATALOG} TO `{principal}`",
+                  f"GRANT USE SCHEMA, SELECT ON SCHEMA {CATALOG}.{SCHEMA} TO `{principal}`"]:
+            spark.sql(g); print("✅", g)
     except Exception as e:
-        print("⚠️ skipped (create the group first, then re-run this cell):", g, "\n   ", str(e).splitlines()[0])
+        print(f"⚠️  '{principal}' — {str(e).splitlines()[0]}")
+        print(f"    → the group/user must exist first (Admin Console → Identity and access), then re-run this cell.")
 
 # COMMAND ----------
 
