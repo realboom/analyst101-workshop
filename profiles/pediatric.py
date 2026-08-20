@@ -88,4 +88,7 @@ PROFILE = {
     "specialties": SPECIALTIES,
     "primary_care_specialties": PRIMARY_CARE_SPECIALTIES,
     "age": {"mean": 9, "std": 5, "min": 0, "max": 18},
+    # Age is drawn from these bands (young-skewed, as real pediatric utilization is) so every
+    # band is well represented instead of bunching in 5-12. Each entry is [low, high, weight].
+    "age_bands": [[0, 0, 0.12], [1, 4, 0.28], [5, 12, 0.35], [13, 18, 0.25]],
 }

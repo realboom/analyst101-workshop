@@ -110,6 +110,12 @@ SPECIALTIES = PROFILE["specialties"]
 PRIMARY_CARE_SPECIALTIES = PROFILE["primary_care_specialties"]
 FACILITY_SEED = PROFILE["facility_seed"]
 AGE = PROFILE["age"]
+# Optional band-weighted age sampling: [[low, high, weight], ...]. When present (e.g. pediatric),
+# age is drawn band-first so every age group is well represented rather than bunched at the mean.
+_AGE_BANDS = PROFILE.get("age_bands")
+if _AGE_BANDS:
+    _age_ranges = [(b[0], b[1]) for b in _AGE_BANDS]
+    _age_weights = [b[2] for b in _AGE_BANDS]
 print(f"Profile: {PROFILE['name']} — {PROFILE['label']} "
       f"({len(DIAGNOSES)} diagnoses, {len(FACILITY_SEED)} facilities, ages {AGE['min']}-{AGE['max']})")
 
@@ -289,7 +295,11 @@ def gen_row(i):
         proc = random.choice(proc_codes)
         los = max(0, int(random.gauss(4, 3)))
 
-    age = min(AGE["max"], max(AGE["min"], int(random.gauss(AGE["mean"], AGE["std"]))))
+    if _AGE_BANDS:
+        _alo, _ahi = random.choices(_age_ranges, weights=_age_weights)[0]
+        age = random.randint(_alo, _ahi)
+    else:
+        age = min(AGE["max"], max(AGE["min"], int(random.gauss(AGE["mean"], AGE["std"]))))
 
     # place the encounter in a month drawn from the volume curve (growth + seasonality),
     # then a random day within it — capped so discharge (admit + los) never spills past END_DATE
