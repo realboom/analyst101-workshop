@@ -136,9 +136,11 @@ or **you add them yourself** (Option B).
 
 1. Back in **Catalog**, open `{{CATALOG}}.analyst101_<you>.dim_facility`. Confirm **12 rows**,
    clean `state` codes, proper-cased `facility_type`, and **no blank regions**.
-2. Open the **Lineage** tab — you'll see the graph: `facilities_raw.<profile>.csv` (volume) → bronze →
-   silver → **`dim_facility`**. You didn't write a line of code, but you got a governed,
-   fully-lineaged pipeline you could schedule to run every night.
+2. Open the **Lineage** tab — you'll see **`facilities_raw.<profile>.csv` (volume) → `dim_facility` (table)**.
+   Unity Catalog lineage tracks *persisted objects*, so it shows the source file and your output
+   table; the bronze → silver → gold steps live **inside the pipeline** (open the operator graph in
+   Visual Data Prep to see them), not as separate lineage nodes. Either way — no code, and a governed,
+   fully-lineaged pipeline you could schedule to run nightly.
 3. *(Optional, if you want the full dimension treatment)* add a primary key + comments:
    ```sql
    ALTER TABLE {{CATALOG}}.analyst101_<you>.dim_facility ALTER COLUMN facility_id SET NOT NULL;
