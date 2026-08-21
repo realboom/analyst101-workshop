@@ -400,7 +400,7 @@ Conventions:
 
 **Step 4 · Add SQL-based context — this is what really tunes Genie.** Free text is the *last* resort; **SQL-based context is more reliable**. Add a few high-value pieces in Genie Code (the same levers Databricks Day goes deep on):
 
-- **A synonym** — add **`visit` / `visits` → encounter** on `fact_encounters`. *(Now "how many visits last year?" just works — the table is "encounters," but people say "visits.")*
+- **A synonym** (maps an everyday word to a **column** — synonyms attach to columns, not tables). In Genie Code, open the data source → **Edit column metadata** → pick `dim_provider.provider_name` → add synonyms **`doctor`, `physician`**. Now *"which doctors have the most encounters?"* resolves. *(Other good ones: `length_of_stay_days` ← "LOS"; `facility_name` ← "hospital", "clinic".)*
 - **A SQL expression** — define a metric once, reused everywhere: add a measure **`readmission_rate` = `AVG(readmitted_30d) * 100`**.
 - **An example query** — teach one full, validated answer. Add the question *"30-day readmission rate by facility, min 200 encounters"* with this SQL:
   ```sql
@@ -413,9 +413,9 @@ Conventions:
 
 **Step 5 · Ask a few questions.** Try these, then your own:
 
-- "How many visits were there in 2024 by region?" — *uses your `visit` synonym and the `dim_facility` you built.*
+- "How many encounters were there in 2024 by region?" — *`region` comes from the `dim_facility` you built.*
+- "Which **doctors** have the highest 30-day readmission rate, with at least 200 encounters?" — *exercises your `doctor` → `provider_name` synonym.*
 - "Which facilities have the highest 30-day readmission rate, with at least 200 encounters?" — *your `dim_facility` + the example query you just added.*
-- "Which providers have the highest 30-day readmission rate, with at least 200 encounters?"
 - "What is the average length of stay for a {{PROCEDURE_EXAMPLE}}?"
 
 **Step 6 · Show the SQL.** On any answer, click **Show generated code** to see the Databricks SQL Genie wrote — for the facility/region questions you'll see it joining `fact_encounters` to *your* `analyst101_<you>.dim_facility`.

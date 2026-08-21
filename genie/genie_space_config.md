@@ -47,14 +47,16 @@ join — shared `fact_encounters` → an attendee's own `dim_facility` (cross-sc
 example query in §4 and backed by the PK they add in Part 0 Step 6; if it ever misses, define it as an
 explicit **relationship** (slide 8's "define join relationships explicitly"), not as text.
 
-### 2. Column synonyms (map user words to the schema)
-Add as **synonyms** on the relevant column/table, so everyday language resolves:
-- **visit**, **visits** → encounter (`fact_encounters`) — *the classic: the table is "encounters," analysts say "visits"*
-- **doctor**, **physician** → provider (`dim_provider`)
-- **hospital**, **clinic**, **site** → facility (`dim_facility`)
+### 2. Column synonyms (map everyday words to a column)
+Synonyms attach to **columns, not tables** — add them in Genie Code → the data source → **Edit column
+metadata** → the column's **Synonyms** field (scoped to this agent). Good ones for this schema:
+- `dim_provider.provider_name` ← **doctor**, **physician**, **clinician**
+- `dim_facility.facility_name` ← **hospital**, **clinic**, **site**
+- `fact_encounters.length_of_stay_days` ← **LOS**, **length of stay**
 
-*(Don't synonym every procedure name to a code — unmaintainable. Genie already matches "tonsillectomy"
-to `procedure_description` in `dim_procedure`.)*
+*(Two non-synonyms to skip: a grain-level term like "visit" = encounter isn't a column, so it's not a
+synonym — Genie already maps "visits" to `fact_encounters` from the table comment. And don't map every
+procedure name to a code — unmaintainable; Genie matches `procedure_description` in `dim_procedure`.)*
 
 ### 3. SQL expressions (define metrics + filters once)
 Add as **SQL expressions** — reusable, governed definitions Genie applies consistently:
