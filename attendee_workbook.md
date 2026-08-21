@@ -359,11 +359,15 @@ Now the fun part. You'll publish the dashboard you just built, create a **Genie 
 
 - Click **Publish** (top right) to publish your dashboard. *(Your published dashboard also has an **Ask Genie** box at the bottom — a quick way to ask questions of just this dashboard's data. We'll build the full agent next.)*
 
-**Step 2 · Create a Genie Agent.**
+**Step 2 · Create a Genie Agent — on the table *you* built.**
 
 - In the left sidebar, click **Genie Agents** → **New** (top-right). *(If your workspace still says "Genie" / "Genie spaces," it's the same thing.)*
-- Choose your **data sources** — the shared tables in `{{CATALOG}}.{{SCHEMA}}`: `fact_encounters`, `dim_provider`, `dim_facility`, `dim_diagnosis`, `dim_procedure` — then click **Create**.
-- **Genie Code** launches automatically — that's the configuration surface where you add instructions and trusted assets.
+- Choose your **data sources**:
+  - from the shared schema `{{CATALOG}}.{{SCHEMA}}`: **`fact_encounters`**, **`dim_provider`**, **`dim_diagnosis`**, **`dim_procedure`**
+  - and — *instead of* the shared `dim_facility` — **your own `{{CATALOG}}.analyst101_<you>.dim_facility`**, the table you built in Part 0. It has the same 12 facilities (same `facility_id`s), so it joins straight to `fact_encounters`.
+- Click **Create**. **Genie Code** launches automatically — that's where you add instructions and trusted assets.
+
+> **This closes the loop:** the raw file you cleaned into a governed `dim_facility` back in Part 0 is now the facility dimension powering your Genie Agent. Ask a facility- or region-level question (below) and Genie answers straight off *your* table.
 
 **Step 3 · Add instructions.**
 
@@ -377,7 +381,8 @@ Data model:
 - fact_encounters is the central fact table, one row per patient encounter.
 - Join to dim_provider on provider_id, dim_facility on facility_id,
   dim_diagnosis on primary_icd10_code = icd10_code, and dim_procedure on
-  primary_procedure_code = procedure_code. (These foreign keys are already defined.)
+  primary_procedure_code = procedure_code. (Foreign keys are defined on the shared tables;
+  your own dim_facility joins to fact_encounters on facility_id.)
 
 Metric definitions (express all rates as a percentage from 0 to 100):
 - Readmission rate = AVG(readmitted_30d) * 100
@@ -396,11 +401,12 @@ Conventions:
 
 **Step 4 · Ask a few questions.** Try these, then your own:
 
-- "How many encounters were there in 2024 by region?"
+- "How many encounters were there in 2024 by region?" — *`region` lives in the `dim_facility` you built, so this answer runs on your table.*
+- "Which facilities have the highest 30-day readmission rate, with at least 200 encounters?" — *another one powered by your `dim_facility`.*
 - "Which providers have the highest 30-day readmission rate, with at least 200 encounters?"
 - "What is the average length of stay for a {{PROCEDURE_EXAMPLE}}?"
 
-**Step 5 · Show the SQL.** On any answer, click **Show generated code** to see the Databricks SQL Genie wrote.
+**Step 5 · Show the SQL.** On any answer, click **Show generated code** to see the Databricks SQL Genie wrote — for the facility/region questions you'll see it joining `fact_encounters` to *your* `analyst101_<you>.dim_facility`.
 
 > **Why this is so quick:** the dataset is fully documented (every column has a description and the table relationships are defined), so Genie already knows how to join the tables. You only add a few instructions on top.
 >

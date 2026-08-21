@@ -3,12 +3,18 @@
 > **Naming:** "Genie spaces" are now **Genie Agents** in the UI (create via the **Genie Agents**
 > sidebar → **New**). The API endpoint is still `/api/2.0/genie/spaces`.
 
-In the workshop, each analyst stands up a **Genie Agent** on the shared tables (Genie Agents → New →
-select tables → Create; **Genie Code** launches to configure it), then pastes in the instructions
-below and asks a few questions. The point is to show how little it takes to get a good agent when the
-data is well documented, and how it connects to the AI/BI dashboard they just built. *(A published
-dashboard's **Ask Genie** box is a quick embedded ask on that dashboard's data — handy, but not the
-full agent.)*
+In the workshop, each analyst stands up a **Genie Agent** (Genie Agents → New → select tables →
+Create; **Genie Code** launches to configure it), then pastes in the instructions below and asks a
+few questions. The point is to show how little it takes to get a good agent when the data is well
+documented, and how it connects to the AI/BI dashboard they just built. *(A published dashboard's
+**Ask Genie** box is a quick embedded ask on that dashboard's data — handy, but not the full agent.)*
+
+**Loop-closing detail (live attendee flow):** each attendee selects shared `fact_encounters` +
+`dim_provider` + `dim_diagnosis` + `dim_procedure`, but uses **their own
+`{{CATALOG}}.analyst101_<user>.dim_facility`** (the table they built in Part 0) in place of the shared
+`dim_facility`. It carries the same `facility_id`s, so it joins to `fact_encounters` on the key named
+in the instructions below — no auto-FK needed. Facility/region questions then answer off the analyst's
+own governed table. (If an attendee's ETL build failed, fall back to the shared `dim_facility`.)
 
 The setup notebook builds this as a **pre-built standalone Genie Agent** (backup + Databricks Day
 driver):
