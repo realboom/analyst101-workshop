@@ -368,6 +368,11 @@ dashboards). Facilitators float. Starter scenarios are in the Attendee Workbook,
 - Each analyst shares for 3-5 minutes: what they built, what surprised them.
 - Handle advanced asks live: drill hierarchies, calculated measures, Genie follow-ups, saving a
   Genie answer into a dashboard, and the publish/share/permissions story versus Tableau Server.
+- **Run the Workbook Day-2 spotlight — "Metric views & SQL functions."** It's the on-ramp to
+  Databricks Day: query the pre-built `pcp_continuity_metrics` metric view with `MEASURE()`, call the
+  trusted functions, and add them to a Genie Agent so a plain-English "PCP continuity by facility"
+  resolves to the *governed* definition. Message: define a metric once, reused identically in
+  dashboards and Genie = trustworthy NL BI. Deploy details + talk track are in `advanced_module/README.md`.
 
 ## Segment 3 - Wrap and next steps (1:40-1:50)
 - Map to reality: "Everything you did sits on synthetic data, but the exact same flow works on your

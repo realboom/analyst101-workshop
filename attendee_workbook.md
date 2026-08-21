@@ -385,7 +385,7 @@ Now the fun part. You'll publish the dashboard you just built, create a **Genie 
 
 - In **Genie Code** (the agent's **Instructions** area), paste the block below (your instructor also shares it). Save.
 
-Instructions block to paste:
+Instructions block to paste (scope + conventions only — we'll add the metrics as SQL next):
 ```
 This Genie Agent answers questions about synthetic hospital encounters. There is no PHI.
 
@@ -396,29 +396,35 @@ Data model:
   primary_procedure_code = procedure_code. (Foreign keys are defined on the shared tables;
   your own dim_facility joins to fact_encounters on facility_id.)
 
-Metric definitions (express all rates as a percentage from 0 to 100):
-- Readmission rate = AVG(readmitted_30d) * 100
-- Mortality rate = AVG(mortality_flag) * 100
-- Complication rate = AVG(complication_flag) * 100
-- Average length of stay = AVG(length_of_stay_days), in days
-
 Conventions:
-- When ranking providers or facilities by a rate, only include those with at least
-  200 encounters unless the user asks otherwise.
-- Show plain-language names in results (provider_name, facility_name, region,
-  clinical_category, procedure_description), not the id columns.
-- "{{PROCEDURE_EXAMPLE}}" means primary_procedure_code = '{{PROCEDURE_CODE}}'.
-- Round rates to one decimal place and currency to whole dollars.
+- Express all rates as a percentage from 0 to 100, rounded to one decimal; currency as whole dollars.
+- When ranking providers or facilities by a rate, only include those with at least 200 encounters
+  unless the user asks otherwise.
+- Show plain-language names in results (provider_name, facility_name, region, clinical_category,
+  procedure_description), not the id columns.
 ```
 
-**Step 4 · Ask a few questions.** Try these, then your own:
+**Step 4 · Add SQL-based context — this is what really tunes Genie.** Free text is the *last* resort; **SQL-based context is more reliable**. Add a few high-value pieces in Genie Code (the same levers Databricks Day goes deep on):
 
-- "How many encounters were there in 2024 by region?" — *`region` lives in the `dim_facility` you built, so this answer runs on your table.*
-- "Which facilities have the highest 30-day readmission rate, with at least 200 encounters?" — *another one powered by your `dim_facility`.*
+- **A synonym** — add **`visit` / `visits` → encounter** on `fact_encounters`. *(Now "how many visits last year?" just works — the table is "encounters," but people say "visits.")*
+- **A SQL expression** — define a metric once, reused everywhere: add a measure **`readmission_rate` = `AVG(readmitted_30d) * 100`**.
+- **An example query** — teach one full, validated answer. Add the question *"30-day readmission rate by facility, min 200 encounters"* with this SQL:
+  ```sql
+  SELECT f.facility_name, ROUND(AVG(e.readmitted_30d)*100,1) AS readmit_rate_pct, COUNT(*) AS encounters
+  FROM fact_encounters e JOIN dim_facility f USING (facility_id)
+  GROUP BY f.facility_name HAVING COUNT(*) >= 200 ORDER BY readmit_rate_pct DESC
+  ```
+
+> **Priority order (what Genie reads, best first):** column comments/keys → **synonyms** → **SQL expressions** (metrics/filters) → **example queries** → free-text instructions *last*. The full set is in `genie/genie_space_config.md`.
+
+**Step 5 · Ask a few questions.** Try these, then your own:
+
+- "How many visits were there in 2024 by region?" — *uses your `visit` synonym and the `dim_facility` you built.*
+- "Which facilities have the highest 30-day readmission rate, with at least 200 encounters?" — *your `dim_facility` + the example query you just added.*
 - "Which providers have the highest 30-day readmission rate, with at least 200 encounters?"
 - "What is the average length of stay for a {{PROCEDURE_EXAMPLE}}?"
 
-**Step 5 · Show the SQL.** On any answer, click **Show generated code** to see the Databricks SQL Genie wrote — for the facility/region questions you'll see it joining `fact_encounters` to *your* `analyst101_<you>.dim_facility`.
+**Step 6 · Show the SQL.** On any answer, click **Show generated code** to see the Databricks SQL Genie wrote — for the facility/region questions you'll see it joining `fact_encounters` to *your* `analyst101_<you>.dim_facility`.
 
 > **Why this works — the setup drives the answer.** Genie's quality comes from the *setup*, not clever prompting. The context it reads is: **well-annotated tables** (every column commented), **explicit joins and keys**, and a **tight scope** (≤5 well-modeled tables — the shared ones plus your `dim_facility`). That's why the shared tables just work — and it's exactly why you annotated your own `dim_facility` in **Part 0, Step 6**. Curated, documented tables beat raw wide ones. *(This is the Databricks Day theme — "maturing Genie": engineer accuracy into the setup, then pin the known-good answers.)*
 >
@@ -457,6 +463,36 @@ Pick a scenario (yours, or one below) and build it. Instructors will float to he
 - A filter and cross-filtering between two widgets.
 - A drill-down hierarchy.
 - A question in Genie, with the SQL revealed.
+
+## Spotlight: metric views & SQL functions — the governed semantic layer
+
+You've defined metrics a few ways now — a dashboard calculated measure, a Genie SQL expression. The catch: define "readmission rate" or "PCP continuity" in three places and you'll eventually get three slightly different numbers. A **metric view** fixes that — define a measure **once**, governed, and every dashboard, notebook, and Genie Agent computes it **identically**. This is the heart of the Databricks Day session; here's a first taste, using assets already built on the shared schema.
+
+**1 · Query the pre-built metric view.** `{{CATALOG}}.{{SCHEMA}}.pcp_continuity_metrics` defines PCP continuity once. Its measures are wrapped in `MEASURE()`; group by its dimensions:
+```sql
+SELECT `Facility`,
+       ROUND(MEASURE(`PCP Continuity Ratio`) * 100, 1) AS continuity_pct,
+       MEASURE(`Total Standard Visits`)                AS visits
+FROM {{CATALOG}}.{{SCHEMA}}.pcp_continuity_metrics
+GROUP BY `Facility`
+ORDER BY continuity_pct DESC;
+```
+Swap `Facility` for `Region` or `Encounter Month` — same governed measure, different slice, no re-deriving the ratio.
+
+**2 · Call the trusted SQL functions.** Reusable, governed logic (and Genie can call them):
+```sql
+SELECT {{CATALOG}}.{{SCHEMA}}.pcp_continuity_ratio() AS overall_continuity;   -- one governed number
+SELECT * FROM {{CATALOG}}.{{SCHEMA}}.pcp_continuity_by_provider()
+ORDER BY continuity_ratio DESC;                                              -- rank providers
+```
+
+**3 · Make them trusted assets in Genie.** In your Genie Agent (Genie Code → trusted assets), add the metric view `pcp_continuity_metrics` and the function `pcp_continuity_ratio`, then ask in plain English:
+- "What's the overall PCP continuity rate?"
+- "Show PCP continuity by facility."
+
+Click **Show generated code** — Genie calls the *governed* definition instead of hand-rolling the logic. That's the difference between *an* answer and a *trustworthy* one.
+
+> **On-ramp to Databricks Day:** one definition of a metric, used identically in dashboards and Genie, is how you make natural-language BI trustworthy. Databricks Day goes deep here — authoring metric views, registering trusted functions, and *pinning* known-good answers so Genie stops guessing. *(PCP continuity = the share of a patient's standard visits handled by their assigned PCP — the headline quality metric.)*
 
 **Share-out:** be ready to show what you built, what surprised you, and your honest read on where this fits versus Tableau.
 
