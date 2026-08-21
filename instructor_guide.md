@@ -401,9 +401,12 @@ your Databricks Day demo:
   `Facility` → `Region` → `Encounter Month`. Land the **query-time grouping** point — continuity is a
   *ratio* (non-additive), so the view keeps it correct at every grain where a copy-pasted calc field
   wouldn't. *(Slides 15–19.)*
-- **Part C — trusted assets + the benchmark:** register the view + function in the Genie Agent, ask
-  "PCP continuity by facility," and **Show generated code** → it calls the governed asset ("Trusted"
-  badge), best-effort vs. deterministic. *(Slides 12, 20.)*
+- **Part C — trusted assets + the benchmark:** the money demo, **verified**. On a bare agent, ask
+  *"overall PCP continuity rate?"* → **76.3%** (Genie applies `is_standard` from the comments) vs
+  *"what share of visits are with the patient's PCP?"* → **65.5%** (drops the exclusion). Same
+  question, 11-point swing by phrasing — best-effort isn't wrong so much as *inconsistent*. Then
+  register the trusted function/metric view → **76.3% every time**, called by name, "Trusted" badge.
+  *(Slides 6, 12, 16, 20.)*
 - **Part D — author your own:** the "go do this on your data" path — a metric-view measure
   (AI-assisted or YAML) and a SQL function in their own schema.
 
@@ -411,11 +414,11 @@ your Databricks Day demo:
 Tableau-heavy attendees — anchor the metric view to "published data source, but one definition for
 *every* tool." Keep authoring (Part D) light for a mixed room; it's a take-home pattern, not a stall point.
 
-> **Verify in the dry-run (inferred UI):** the **trusted assets** location in Genie Code, the
-> **"Trusted" badge**, and the **Catalog Explorer → Create → Metric view** AI-assisted authoring flow —
-> confirm the exact labels live and fix any that drift. The **before/after PCP-continuity benchmark**
-> (naive best-effort vs. trusted function) is the strong contrast — pre-run it to confirm the "before"
-> actually misses the standard-visits/assigned-PCP rules on this data.
+> **Benchmark is verified** (tested via the Genie API): governed number = **76.3%**; a bare agent
+> gives 76.3% for "continuity rate" but **65.5%** for "share of visits with the patient's PCP" (drops
+> the `is_standard` exclusion) — the phrasing-variance contrast is real. **Still verify the inferred
+> UI labels live:** the **trusted assets** location in Genie Code, the **"Trusted" badge**, and
+> **Catalog Explorer → Create → Metric view** AI-assisted authoring — fix any that drift.
 
 ### Break (12:55-1:05)
 

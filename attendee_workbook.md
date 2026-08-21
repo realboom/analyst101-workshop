@@ -506,13 +506,15 @@ GROUP BY `Region` ORDER BY continuity_pct DESC;
 
 Now wire the governed definitions into Genie so plain-language questions resolve to them.
 
-1. In your Genie Agent → **Genie Code** → **trusted assets**, add the metric view `pcp_continuity_metrics` and the function `pcp_continuity_ratio`.
-2. **Benchmark** — ask:
-   - *"What's our overall PCP continuity rate?"*
-   - *"Show PCP continuity by facility."*
-3. Click **Show generated code**. With the trusted asset registered, Genie **calls the governed function / metric view** (you'll see it by name in the SQL), and the answer carries a **"Trusted"** badge — deterministic, audited, and it matches the dashboard and the metric view exactly.
+**First, see the problem — best-effort is phrasing-sensitive.** On a *bare* agent (no trusted asset), ask the same thing two ways and click **Show generated code** each time:
+- *"What is our overall PCP continuity rate?"* → Genie applies the standard-visits exclusion → **76.3%** ✅
+- *"What share of visits are with the patient's PCP?"* → Genie **drops** the `is_standard` filter → **65.5%** ❌
 
-> **Best-effort vs. deterministic** (the Databricks Day frame): *without* a trusted asset, Genie writes SQL on the fly — fine for open exploration, but it can miss the business rules (here: the **standard-visits-only** exclusion and the **assigned-PCP match**) and vary run to run. *With* the trusted function, the question that matters gets the same pre-approved answer every time. The practical move: list your top ~10 questions and pin a trusted answer to each.
+Same question, an **11-point swing** by wording. Genie isn't "dumb" here — it read the column comments and got the first one right — it's just *not guaranteed*. That's the trust problem: two analysts phrase it differently and report two different numbers.
+
+**Now pin it.** In your Genie Agent → **Genie Code** → **trusted assets**, add the metric view `pcp_continuity_metrics` and the function `pcp_continuity_ratio`. Ask the continuity question again (any phrasing) and **Show generated code**: Genie now **calls the governed function / metric view** (you'll see it by name in the SQL), returns **76.3% every time**, and the answer carries a **"Trusted"** badge — deterministic, audited, matching the dashboard and metric view exactly.
+
+> **Best-effort vs. deterministic** (the Databricks Day frame): best-effort SQL is great for open exploration and is often right, but it can **vary by phrasing / run to run**. For the questions that *matter*, pin a trusted asset so everyone gets the same governed number regardless of how they ask. The practical move: list your top ~10 questions and pin a trusted answer to each.
 
 ## Part D - Author your own (do this on your own data)
 
