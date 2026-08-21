@@ -419,6 +419,7 @@ Conventions:
   FROM fact_encounters e JOIN dim_facility f USING (facility_id)
   GROUP BY f.facility_name HAVING COUNT(*) >= 200 ORDER BY readmit_rate_pct DESC
   ```
+  *Note the example spells out `AVG(readmitted_30d)*100` rather than referencing the `readmission_rate` expression above. An example query must be complete, runnable SQL — a SQL expression is context Genie reads, not a column/function you can name in a query. Keep the two in sync (same math). This is the opposite of metric views / SQL functions on Day 2, which **are** real objects you call by name — `MEASURE(...)` / `pcp_continuity_ratio()`.*
 
 > **Priority order (what Genie reads, best first):** column comments/keys → **synonyms** → **SQL expressions** (metrics/filters) → **example queries** → free-text instructions *last*. The full set is in `genie/genie_space_config.md`.
 
