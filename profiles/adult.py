@@ -89,4 +89,7 @@ PROFILE = {
     "specialties": SPECIALTIES,
     "primary_care_specialties": PRIMARY_CARE_SPECIALTIES,
     "age": {"mean": 58, "std": 18, "min": 0, "max": 99},
+    # Per-band cost multiplier on charges (paid tracks charges): adult spend rises with age —
+    # 65+ highest (chronic disease, more intervention), under-40 lowest. [low, high, mult].
+    "age_cost_bands": [[0, 39, 0.8], [40, 64, 1.1], [65, 99, 1.6]],
 }

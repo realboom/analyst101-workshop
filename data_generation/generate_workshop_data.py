@@ -116,6 +116,15 @@ _AGE_BANDS = PROFILE.get("age_bands")
 if _AGE_BANDS:
     _age_ranges = [(b[0], b[1]) for b in _AGE_BANDS]
     _age_weights = [b[2] for b in _AGE_BANDS]
+
+# Optional per-band cost multiplier on charges, so avg charges/paid vary by age band the way real
+# claims data does (e.g. pediatric infants highest, mid-childhood lowest). [[low, high, mult], ...].
+_AGE_COST = PROFILE.get("age_cost_bands")
+def _age_cost_mult(a):
+    for lo, hi, m in (_AGE_COST or []):
+        if lo <= a <= hi:
+            return m
+    return 1.0
 print(f"Profile: {PROFILE['name']} — {PROFILE['label']} "
       f"({len(DIAGNOSES)} diagnoses, {len(FACILITY_SEED)} facilities, ages {AGE['min']}-{AGE['max']})")
 
@@ -321,8 +330,11 @@ def gen_row(i):
     # only survivors can be readmitted
     readmit = 1 if (mortality == 0 and rnd() < base_readm * age_mult) else 0
 
-    charges = round(random.uniform(800, 4000) + los * random.uniform(1500, 4500)
-                    + (8000 if proc != "NONE" else 0) * random.uniform(0.5, 2.5), 2)
+    # base charges from LOS + procedure, then scaled by an age-band cost multiplier so charges
+    # (and paid, which tracks charges) vary realistically across age bands
+    charges = round((random.uniform(800, 4000) + los * random.uniform(1500, 4500)
+                     + (8000 if proc != "NONE" else 0) * random.uniform(0.5, 2.5))
+                    * _age_cost_mult(age), 2)
     paid = round(charges * random.uniform(0.35, 0.85), 2)
     payer = random.choices(PAYER_TYPES, weights=[0.5, 0.3, 0.15, 0.05])[0]
 

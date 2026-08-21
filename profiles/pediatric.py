@@ -91,4 +91,8 @@ PROFILE = {
     # Age is drawn from these bands (young-skewed, as real pediatric utilization is) so every
     # band is well represented instead of bunching in 5-12. Each entry is [low, high, weight].
     "age_bands": [[0, 0, 0.12], [1, 4, 0.28], [5, 12, 0.35], [13, 18, 0.25]],
+    # Per-band cost multiplier on charges (paid tracks charges), mirroring real pediatric spend:
+    # infants highest (NICU / congenital / neonatal), mid-childhood lowest (healthiest years),
+    # teens rising (sports injuries, behavioral health, chronic-disease onset). [low, high, mult].
+    "age_cost_bands": [[0, 0, 1.7], [1, 4, 1.05], [5, 12, 0.8], [13, 18, 1.2]],
 }
