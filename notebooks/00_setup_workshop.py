@@ -14,6 +14,12 @@
 # MAGIC **How to use:** run **Step 0a** to create the input widgets, fill them in at the top of the
 # MAGIC notebook, then run **Step 0b** and **Steps 1–6 one at a time**, top to bottom, reading each
 # MAGIC output before moving on.
+# MAGIC
+# MAGIC > **Re-running after a code change?** A `git push` does **not** update this workspace. First
+# MAGIC > **Pull** the Git folder to get the new commit, then **detach & reattach** this notebook (so it
+# MAGIC > re-imports the updated `profiles/` modules in a fresh Python session), *then* re-run. Skipping
+# MAGIC > either step silently runs the old code. Confirm the data changed by querying the table on the
+# MAGIC > dashboard's warehouse — a dashboard "refresh" reuses cached results.
 
 # COMMAND ----------
 

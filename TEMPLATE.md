@@ -18,6 +18,14 @@ The notebook does all of it: generates the star schema for the chosen profile, b
 module (metric view + SQL functions), imports + publishes the AI/BI dashboard, creates the Genie
 space with trusted assets, grants the attendee group, and runs a verification smoke test.
 
+> **Re-running after a code change?** A `git push` to the repo does **not** update your workspace —
+> the Git folder runs whatever commit it last pulled. So after any change to the generator, profiles,
+> dashboard, or SQL: (1) in the Git folder, click **Pull** to get the latest commit (confirm it landed
+> by opening a file you changed); (2) **detach & reattach** the setup notebook so it re-imports the
+> updated `profiles/` modules in a fresh Python session; then (3) re-run. Skip either step and it
+> silently executes the old code. To confirm the *data* actually changed, query the table directly on
+> the dashboard's warehouse — don't judge it from a dashboard "refresh," which reuses cached results.
+
 ## Setup-notebook widgets
 
 | Widget | What it is | Example |
