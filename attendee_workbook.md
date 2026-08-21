@@ -66,7 +66,7 @@ That's it. Everywhere below where it says "add a table" or "add a combo chart," 
 
 Take a messy CSV a source system handed you and turn it into a clean, governed `dim_facility` table — **no code**, in the Databricks **Lakeflow Designer** visual ETL builder. Along the way you'll meet the building blocks every Databricks project uses: a **catalog**, a **schema**, a **volume**, and the **medallion (bronze → silver → gold)** pattern.
 
-> You'll build everything into **your own schema**, which you create in Step 1, so you can click freely without stepping on anyone else. Pick a schema name based on your own name — **`{{CATALOG}}.analyst101_<your-name>`** (e.g. `analyst101_jchen`). Everywhere below that says `analyst101_<you>`, use yours.
+> You'll build everything into **your own schema**, which you create in Step 1, so you can click freely without stepping on anyone else. Pick a schema name based on your own name — **`{{CATALOG}}.analyst101_<your-name>`** (e.g. `analyst101_jsmith`). Everywhere below that says `analyst101_<you>`, use yours.
 
 **The concepts (2 minutes, then we click).**
 
@@ -78,7 +78,7 @@ Today: **upload a raw facilities file → bronze → silver → gold `dim_facili
 
 **Step 1 · Create your schema and a Volume (in Catalog Explorer).** No code — so you get a feel for how Unity Catalog is organized. Everything you build lives in **your own** schema, which you'll own.
 
-- **Create your schema:** left nav → **Catalog** → click the catalog **`{{CATALOG}}`** → **Create schema** (top-right) → name it **`analyst101_<you>`** (e.g. `analyst101_jchen`), leave the default storage location, **Create**. *(If **Create schema** is greyed out, tell your instructor — the workshop group needs `CREATE SCHEMA` on `{{CATALOG}}`.)*
+- **Create your schema:** left nav → **Catalog** → click the catalog **`{{CATALOG}}`** → **Create schema** (top-right) → name it **`analyst101_<you>`** (e.g. `analyst101_jsmith`), leave the default storage location, **Create**. *(If **Create schema** is greyed out, tell your instructor — the workshop group needs `CREATE SCHEMA` on `{{CATALOG}}`.)*
 - **Create a `landing` volume:** open your new schema **`{{CATALOG}}.analyst101_<you>`** → **Create → Volume** → name it **`landing`**, leave it a **Managed volume**, **Create**. A volume is the governed home for files — where your raw file lands before it becomes a table.
 
 **Step 2 · Upload the raw file.**
