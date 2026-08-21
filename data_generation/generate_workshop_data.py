@@ -558,7 +558,7 @@ display(spark.sql("""
 
 # MAGIC %md
 # MAGIC ## (Optional) Stage the messy ETL-lab file into a Volume
-# MAGIC For the Foundations + ETL lab (`etl_lab/etl_lab_guide.md`), attendees upload the raw CSV
+# MAGIC For the Foundations + ETL lab (Attendee Workbook, Part 0), attendees upload the raw CSV
 # MAGIC themselves. This optional cell stages a **backup copy** in a shared volume so instructors
 # MAGIC have it on hand if a laptop upload hiccups. It builds the deliberately-messy extract from the
 # MAGIC **same profile** as the dataset (via `profiles.common`), so it always matches — no drift.

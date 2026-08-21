@@ -1,14 +1,9 @@
-# Attendee Workbook - Analyst 101 Workshop (AI/BI half)
+# Attendee Workbook — Analyst 101 Workshop
 
-Welcome. This is the **AI/BI half** of the workshop — building dashboards and asking questions in
-plain language with Genie, on a shared synthetic dataset. It picks up right
-after the **Foundations + ETL lab** (`etl_lab/etl_lab_guide.md`), where you built a governed
-`dim_facility` table from a raw file. Now we use tables like it. Follow along on your own screen,
-and ask questions any time.
-
-> **Part 0 — did you do the ETL lab first?** If not, that's where you create a volume, upload a
-> file, and build a bronze→silver→gold pipeline in Lakeflow Designer. See
-> `etl_lab/etl_lab_guide.md`. This workbook assumes you've seen it.
+Welcome. This workbook is the **whole workshop**, start to finish: you'll take a **raw file** all the
+way to a **governed table** in the no-code **Lakeflow Designer** (Part 0), then build an **AI/BI
+dashboard** and ask questions in plain language with **Genie** on the shared dataset (Parts 1–4).
+Follow along on your own screen, and ask questions any time. All data is synthetic — **no PHI**.
 
 **Optional lens — coming from Tableau?** AI/BI isn't a one-to-one Tableau replacement, and that's
 fine. If Tableau is your daily tool, keep the cheat-sheet below handy and note where this way of
@@ -61,10 +56,70 @@ That's it. Everywhere below where it says "add a table" or "add a combo chart," 
 
 # DAY 1
 
-> **Single-session Analyst 101?** Follow `agenda.md`: you'll do **Parts 1–3** below plus the **Genie**
-> segment. The "Day 1 / Day 2" split here is the fuller two-day layout — use it if you have the time.
+> **Single-session Analyst 101?** Follow `agenda.md`: you'll do **Part 0** (ETL) plus **Parts 1–3**
+> below and the **Genie** segment. The "Day 1 / Day 2" split here is the fuller two-day layout — use
+> it if you have the time.
 
-> **Capabilities we will cover today:** rich interactive visuals (combo, heatmap, map, pivot, scorecard), calculated dimensions and measures, parameterized widgets, cross-filtering, drilling, forecasting and AI functions, multipage reporting, and Ask Genie from a published dashboard. The companion one-pager has a quick reference for each.
+> **Capabilities we will cover today:** the no-code medallion ETL build (Part 0), then rich interactive visuals (combo, heatmap, map, pivot, scorecard), calculated dimensions and measures, parameterized widgets, cross-filtering, drilling, forecasting and AI functions, multipage reporting, and Ask Genie from a published dashboard. The companion one-pager has a quick reference for each.
+
+## Part 0 · Foundations & ETL — from a raw file to a governed table
+
+Take a messy CSV a source system handed you and turn it into a clean, governed `dim_facility` table — **no code**, in the Databricks **Lakeflow Designer** visual ETL builder. Along the way you'll meet the building blocks every Databricks project uses: a **catalog**, a **schema**, a **volume**, and the **medallion (bronze → silver → gold)** pattern.
+
+> You'll build everything into **your own schema**, which you create in Step 1, so you can click freely without stepping on anyone else. Pick a schema name based on your own name — **`{{CATALOG}}.analyst101_<your-name>`** (e.g. `analyst101_jchen`). Everywhere below that says `analyst101_<you>`, use yours.
+
+**The concepts (2 minutes, then we click).**
+
+- **Catalog → Schema → Table** is just Databricks' three-level namespace, like *database server → database → table* elsewhere. Everything lives in **Unity Catalog**, which governs who can see and do what.
+- **Volume** = a governed folder for **files** (CSVs, images, PDFs) that lives under a schema. It's where raw files land before they become tables.
+- **Medallion architecture** is the industry-standard way to refine data in layers: **Bronze** = raw, as-ingested; **Silver** = cleaned and conformed (trimmed, typed, standardized, de-duplicated); **Gold** = business-ready, the table your dashboards and Genie actually use.
+
+Today: **upload a raw facilities file → bronze → silver → gold `dim_facility`.**
+
+**Step 1 · Create your schema and a Volume (in Catalog Explorer).** No code — so you get a feel for how Unity Catalog is organized. Everything you build lives in **your own** schema, which you'll own.
+
+- **Create your schema:** left nav → **Catalog** → click the catalog **`{{CATALOG}}`** → **Create schema** (top-right) → name it **`analyst101_<you>`** (e.g. `analyst101_jchen`), leave the default storage location, **Create**. *(If **Create schema** is greyed out, tell your instructor — the workshop group needs `CREATE SCHEMA` on `{{CATALOG}}`.)*
+- **Create a `landing` volume:** open your new schema **`{{CATALOG}}.analyst101_<you>`** → **Create → Volume** → name it **`landing`**, leave it a **Managed volume**, **Create**. A volume is the governed home for files — where your raw file lands before it becomes a table.
+
+**Step 2 · Upload the raw file.**
+
+- Open your **`landing`** volume → **Upload to this volume** → choose the **`facilities_raw.<profile>.csv`** for your workshop (e.g. `facilities_raw.pediatric.csv`) — your instructor will share it, or download it from the workshop repo.
+- Peek at it — it's *messy on purpose*: extra spaces, `State` spelled every which way (full name / code / different case), inconsistent `Type` capitalization, two rows with a **blank Region**, a **duplicate** facility row, and a trailing empty line. This is what real source extracts look like. Our job is to fix it.
+
+**Step 3 · Open Lakeflow Designer (Visual Data Prep) and start a build.**
+
+- Left nav → **Data Engineering → Visual Data Prep**. *(The Lakeflow Designer visual, no-code ETL builder — under Data Engineering you'll see **Runs**, **Data Ingestion**, and **Visual Data Prep**; pick the last one.)*
+- Click **Create** (or **New**) to start a pipeline; name it **`facilities_medallion`**.
+- You land on a **start screen** with a **Genie prompt box** and tiles (**Select a source**, **Upload a file**, **Load a sample**). From here there are **two ways to build** — pick one in Step 4: **Option A** — prompt Genie to build it (fast, AI-assisted), or **Option B** — build it by hand, one operator at a time.
+
+**Step 4 · Build bronze → silver → gold — two ways.** You're turning the messy file into a clean 12-row `dim_facility`. Do it **either** way below — the transformations are the same; the difference is whether **Genie writes the steps for you** (A) or **you add them yourself** (B).
+
+> Bronze → silver → gold here are **stages in one pipeline, not three separate tables.** Bronze is the raw read, silver is the cleaning/conforming, and the only table you save is the **gold** `dim_facility`.
+
+- **Option A · Prompt Genie to build it (AI-assisted) — the fast way.** Choose **Select a source** and point at your `landing` volume's `facilities_raw.<profile>.csv`. In the **Genie prompt box**, describe the outcome in plain English, e.g.:
+  > Clean this facilities CSV into a table called **dim_facility**. Trim whitespace on all text columns. Standardize **State** to a 2-letter US state code (e.g. Utah → UT). Proper-case **Type**. Drop rows where **Facility ID** is blank. Remove duplicate rows by **Facility ID**. Fill any blank **Region** from another facility in the same **City**. Rename columns to snake_case: facility_id, facility_name, facility_type, city, state, region.
+
+  **Review the steps Genie generated** — each shows a live preview; tweak anything off. Set the output to a **Table** named **`dim_facility`** in **`{{CATALOG}}.analyst101_<you>`**, mode **Create/replace**, then **Run**. *(Table type — a materialized view isn't needed and may not be available everywhere. Create/replace rebuilds the full table each run; merge/append are for incremental loads.)*
+
+- **Option B · Build it by hand (operator by operator) — the manual way.**
+  - **Bronze — bring the raw file in as-is:** **Select a source** → `{{CATALOG}}.analyst101_<you>.landing` → `facilities_raw.<profile>.csv`. Confirm it parsed into columns (`Facility ID`, `Facility Name`, `Type`, `City`, `State`, `Region`). Leave everything raw — you should see ~13 rows (the dupe and blank line are still here; expected).
+  - **Silver — clean and conform** (add transforms one at a time; each shows a live preview): (1) **Trim whitespace** on the text columns. (2) **Standardize `State` to a 2-letter code** — uppercase, then map full names to codes (`UTAH→UT`, `CALIFORNIA→CA`). (3) **Proper-case `Type`** (so `pediatric clinic` / `PEDIATRIC CLINIC` → `Pediatric Clinic`). (4) **Drop empty rows** — filter where `Facility ID` is null/blank. (5) **De-duplicate** on `Facility ID` (standardize *first*, so the duplicate is a true dupe by now). → **12 clean rows**, but two still have a blank `Region`.
+  - **Gold — make it business-ready `dim_facility`:** (1) **Fill the missing `Region`** from a same-`City` sibling — a window/group step taking `MAX(Region)` **partitioned by `City`**, where `Region` is blank. (2) **Rename to snake_case** (`Facility ID→facility_id`, etc.). (3) **Set the output** to a **Table** named **`dim_facility`** in **`{{CATALOG}}.analyst101_<you>`**, mode **Create/replace**, then **Run**.
+
+**Step 5 · Verify + the governance payoff.**
+
+- Back in **Catalog**, open `{{CATALOG}}.analyst101_<you>.dim_facility`. Confirm **12 rows**, clean `state` codes, proper-cased `facility_type`, and **no blank regions**.
+- Open the **Lineage** tab — you'll see **`facilities_raw.<profile>.csv` (volume) → `dim_facility` (table)**. UC lineage tracks *persisted objects*, so the bronze→silver→gold steps live **inside the pipeline** (open the operator graph in Visual Data Prep to see them). No code, and a governed, fully-lineaged pipeline you could schedule nightly.
+- *(Optional — the full dimension treatment)* add a primary key + comments:
+  ```sql
+  ALTER TABLE {{CATALOG}}.analyst101_<you>.dim_facility ALTER COLUMN facility_id SET NOT NULL;
+  ALTER TABLE {{CATALOG}}.analyst101_<you>.dim_facility ADD CONSTRAINT pk_dim_facility PRIMARY KEY (facility_id);
+  COMMENT ON TABLE {{CATALOG}}.analyst101_<you>.dim_facility IS 'Hospitals and clinics with type, city, state, region. One row per facility.';
+  ```
+
+> **What you just did:** turned a raw file into a governed, documented, business-ready table with a repeatable, no-code pipeline. This `dim_facility` is exactly the kind of table the AI/BI dashboards and Genie read in the rest of the workshop — so let's go use tables like it.
+
+---
 
 ## Part 1 - The dataset is your analytics engine (window functions, ranking, period-over-period)
 

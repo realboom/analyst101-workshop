@@ -34,7 +34,7 @@ space with trusted assets, grants the attendee group, and runs a verification sm
 **Profile ↔ procedure must match:** the `adult` profile uses `knee replacement` = `27447`; the
 `pediatric` profile uses `tonsillectomy` = `42820`. Asking Genie about a procedure that isn't in the
 chosen profile returns nothing — that's why these are widgets, not hardcoded. Baseline outcome rates
-also differ by profile (see `lab_guides/workshop_assets.md`). The notebook warns if the profile and
+also differ by profile (see `workshop_assets.md`). The notebook warns if the profile and
 procedure code don't line up.
 
 Each attendee **creates their own** ETL schema **`<catalog>.analyst101_<user>`** as the first step of
@@ -44,9 +44,10 @@ This assumes the workshop runs in the customer's own workspace, where attendees 
 
 ## Attendee-facing guides
 
-The lab guides (`lab_guides/`, `etl_lab/`, `genie/`) are human-readable docs that still carry
-`{{CATALOG}}` / `{{SCHEMA}}` / `{{PROCEDURE_EXAMPLE}}` / `{{PROCEDURE_CODE}}` / `{{WORKSPACE_URL}}` /
-`{{INDUSTRY_FLAVOR}}` placeholders — the setup notebook builds the *assets*, not these docs. When you
+The lab guides (`attendee_workbook.md`, `instructor_guide.md`, `genie/genie_space_config.md`) are
+human-readable docs that still carry `{{CATALOG}}` / `{{SCHEMA}}` / `{{PROCEDURE_EXAMPLE}}` /
+`{{PROCEDURE_CODE}}` / `{{WORKSPACE_URL}}` / `{{INDUSTRY_FLAVOR}}` placeholders — the setup notebook
+builds the *assets*, not these docs. When you
 hand the guides to attendees, fill those placeholders with your workshop's real values (a filled
 Google Doc per client works well). Keep customer-identifying values in a `clients/<name>/` overlay,
 which is git-ignored and stays out of this public repo.

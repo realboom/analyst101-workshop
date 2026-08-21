@@ -23,7 +23,7 @@ Fill this in per client when you instantiate (see `../TEMPLATE.md`). All data is
   `{{CATALOG}}.analyst101_<user>` as the first step of the ETL lab — this is where they create their
   `landing` volume and build bronze/silver/gold. No per-attendee provisioning by the instructor; the
   workshop group just needs `CREATE SCHEMA` on `{{CATALOG}}` (see Grants below).
-- **Guides:** `etl_lab/etl_lab_guide.md` (attendee steps), `etl_lab/etl_instructor_notes.md`.
+- **Guides:** Attendee Workbook **Part 0** (attendee steps) and the Instructor Guide's *Foundations + ETL lab* playbook.
 
 ## Deployed assets (record IDs after you create them)
 - **Dashboard:** import `dashboard/workshop.lvdash.json` (targets `{{CATALOG}}.{{SCHEMA}}`). ID: `<fill>`

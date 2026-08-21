@@ -66,6 +66,10 @@ PCP-continuity metric is meaningful.
 analyst101-workshop/
 ├── README.md                     · this file
 ├── TEMPLATE.md                   · setup-notebook widgets + per-workshop setup
+├── agenda.md                     · full Analyst 101 agenda (Foundations+ETL, then AI/BI)
+├── attendee_workbook.md          · attendee step-by-step — the WHOLE workshop (Part 0 ETL + Parts 1–4 AI/BI + Genie)
+├── instructor_guide.md           · facilitator manual — whole workshop (ETL playbook + AI/BI segments)
+├── workshop_assets.md            · live links/IDs + provisioning checklist
 ├── notebooks/
 │   └── 00_setup_workshop.py      · one-time notebook build (data, dashboard, Genie, grants, verify)
 ├── profiles/                     · population "flavor packs" — single source of truth per dataset
@@ -74,22 +78,15 @@ analyst101-workshop/
 │   └── pediatric.py              · pediatric / children's-health seed data
 ├── data_generation/
 │   └── generate_workshop_data.py · parameterized synthetic dataset (picks a profile via widget)
-├── etl_lab/                      · the Foundations + ETL front-half
+├── etl_lab/                      · ETL-lab data (the steps live in the workbook's Part 0)
 │   ├── build_raw_csv.py          · generates each profile's messy CSV (no drift from the dataset)
 │   ├── facilities_raw.adult.csv  · messy source extract (adult) — derived from profiles/adult
-│   ├── facilities_raw.pediatric.csv · messy source extract (pediatric)
-│   ├── etl_lab_guide.md          · attendee steps (volume → Designer bronze→silver→gold)
-│   └── etl_instructor_notes.md   · talk track, timings, UC grants, gotchas
+│   └── facilities_raw.pediatric.csv · messy source extract (pediatric)
 ├── dashboard/workshop.lvdash.json· starter AI/BI (Lakeview) dashboard
 ├── genie/genie_space_config.md   · Genie space setup: instructions + sample questions
 ├── advanced_module/              · optional "go deeper" layer (Databricks Day / advanced session)
 │   ├── continuity_assets.sql     · metric view + SQL functions + enriched view (PCP continuity)
 │   └── README.md                 · deploy steps + demo talk track (Metric Views, functions, Genie)
-├── lab_guides/
-│   ├── agenda.md                 · full Analyst 101 agenda (Foundations+ETL, then AI/BI)
-│   ├── instructor_guide.md       · AI/BI facilitator manual
-│   ├── attendee_workbook.md      · AI/BI step-by-step for attendees
-│   └── workshop_assets.md        · live links/IDs + provisioning checklist
 └── clients/                      · per-client overlays (git-ignored; kept out of the public repo)
 ```
 

@@ -1,15 +1,15 @@
-# Instructor Guide — Analyst 101 Workshop (AI/BI half)
+# Instructor Guide — Analyst 101 Workshop
 
 **For:** workshop facilitators (lead + floating support).
 **Audience:** a mixed group of analysts/business users — some SQL-comfortable, some newer to
 Databricks, some coming from Tableau. Meet each where they are.
 **Style:** Hands-on, light on theory. Talk for a few minutes, then everyone clicks. Build in breaks.
 
-This is the **AI/BI half**. It follows the **Foundations + ETL lab** (`etl_lab/etl_lab_guide.md`
-and `etl_lab/etl_instructor_notes.md`), where attendees create a volume, upload a file, and build
-a `dim_facility` table in Lakeflow Designer. Bridge into this half with: *"the table you just built
-is the same kind the dashboards read."* This guide pairs with the **Attendee Workbook**. Live asset
-links and IDs are in `workshop_assets.md`. All data is synthetic, no PHI.
+This guide covers the **whole workshop** and pairs with the **Attendee Workbook** (Part 0 = the
+Foundations + ETL lab; Parts 1–4 = the AI/BI half). The **Foundations + ETL** facilitator playbook is
+the first section below; the **AI/BI** segment playbook follows it. Bridge from ETL into the AI/BI
+half with: *"the `dim_facility` you just built is the same kind of table the dashboards read."* Live
+asset links and IDs are in `workshop_assets.md`. All data is synthetic, no PHI.
 
 ---
 
@@ -64,6 +64,77 @@ rabbit-hole.
 > AI/BI-only cadence and are illustrative. For the Analyst 101 session, **follow `agenda.md`** — it
 > front-loads the Foundations + ETL lab, then draws on the AI/BI segments below. Treat what follows
 > as a segment **playbook** to pull from, sized to whatever block your agenda gives the AI/BI half.
+
+# Foundations + ETL lab (instructor playbook)
+
+**The lab:** Attendee Workbook **Part 0**. Attendees create their own schema + a volume, upload their
+profile's `facilities_raw.<profile>.csv`, and build a no-code **bronze → silver → gold** pipeline in
+**Lakeflow Designer** that lands a clean `dim_facility`. This is the Analyst 101 foundations
+front-half; the AI/BI half follows on the pre-built shared star schema.
+
+**Time budget:** ~45–55 min. Concepts 5 · Volume + upload 8 · Bronze 7 · Silver 15 · Gold 10 ·
+Verify/lineage 8.
+
+## The one thing to land
+Data-quality work is real work, and Databricks lets an analyst do it **visually, governed, and
+repeatable** — not in a throwaway spreadsheet. Every messy thing in the file maps to one Designer
+operator. By the end they have a lineage graph and a table they could schedule nightly.
+
+## Cadence: "watch me, then you do it"
+Designer is new to most attendees. Demo Workbook Part 0 Steps 3–4 (start a build, add the bronze
+source) live on the projector once, then let them do it. Do **Silver together, operator by operator**,
+pausing on each live preview so they see the change. **Gold** they can mostly drive themselves; float
+and help.
+
+## What each messy element teaches (and the operator that fixes it)
+| In the raw file | Layer | Designer operator |
+|---|---|---|
+| Leading/trailing spaces on names | Silver | Trim / clean |
+| `State` as full name / code / mixed case ("Utah" / "UT " / "ut") | Silver | Upper + map to 2-letter (standard US-state lookup) |
+| `Type` in mixed casing ("pediatric clinic" / "PEDIATRIC CLINIC") | Silver | Title-case |
+| Trailing blank line | Silver | Filter `Facility ID` not null |
+| One duplicated facility row | Silver | Deduplicate on `facility_id` |
+| Blank `Region` on two facilities (each shares a City with a sibling) | Gold | Fill from same-city sibling (window by `City`) |
+| `Facility ID` → `facility_id` etc. | Gold | Rename to snake_case |
+
+**Order matters — call it out:** standardize *before* you dedupe, or the duplicated rows won't match.
+This is a genuine ETL lesson, not a Databricks quirk. **Expected end state:** exactly **12 rows**,
+clean 2-letter states, proper-cased types, no null regions. (Validated per profile:
+`python etl_lab/build_raw_csv.py --all --check`.)
+
+## Prerequisites BEFORE the session (one-time, group-level)
+- **Serverless compute** available (Designer runs on serverless).
+- The workshop group has, on `{{CATALOG}}`: `USE CATALOG` + **`CREATE SCHEMA`** (so each attendee can
+  create their own schema in the lab), and `USE SCHEMA` + `SELECT` on `{{CATALOG}}.{{SCHEMA}}`.
+  Attendees **create their own** `{{CATALOG}}.analyst101_<user>` schema as Step 1 — they own it, so
+  `CREATE VOLUME` / `CREATE TABLE` come automatically. No per-attendee provisioning by the instructor.
+- Attendees can reach **Lakeflow / Designer** (Data Engineering entitlement).
+- The profile's `etl_lab/facilities_raw.<profile>.csv` shared with attendees (Slack/email/repo link),
+  or pre-staged in a shared volume (the data generator has an optional `stage_raw_csv` cell).
+
+## Common gotchas
+- **"I can't create a schema"** → the group is missing `CREATE SCHEMA` on `{{CATALOG}}`. Fix:
+  `GRANT CREATE SCHEMA ON CATALOG {{CATALOG}} TO \`analyst101_attendees\`;` then they re-run
+  `CREATE SCHEMA {{CATALOG}}.analyst101_<their-name>`.
+- **"I don't see Create Volume / can't create a table"** → they're pointed at a schema they don't own
+  (e.g. the shared one). Confirm they're in **their own** `analyst101_<user>` schema.
+- **"Designer won't start / no compute"** → serverless not enabled or not selected.
+- **Source parsed as one column** → header/delimiter detection; re-open the source pane and confirm
+  comma-delimited with header row.
+- **Dedup left 13 rows** → they deduped *before* standardizing; reorder: clean → standardize → dedupe.
+- **Region still blank after gold** → the same-city fill ran on the *untrimmed* City; trim City first,
+  then partition by City.
+
+## If you're short on time
+Drop the optional PK/comments (Step 5) and any standalone silver materialization — a single Designer
+flow (bronze source → transforms → gold output) tells the whole story. Do **not** skip the lineage
+view; it's the payoff shot.
+
+## The bridge to the AI/BI half
+Close with: *"The `dim_facility` you just built is the same kind of governed table the dashboards and
+Genie read. Now let's go use tables like it."* Then move into Part 1 of the workbook.
+
+---
 
 # DAY 1 - What's possible in AI/BI (~3h50, 12:00-3:50 CT)
 

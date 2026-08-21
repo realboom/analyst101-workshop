@@ -19,7 +19,7 @@
 | Time | Segment | What we'll do |
 |---|---|---|
 | 0:00–0:15 | **Welcome & orientation** | Goals, a tour of the workspace and Unity Catalog (catalog → schema → table/volume), and the medallion (bronze→silver→gold) idea. |
-| 0:15–1:05 | **Foundations + ETL lab** | Create a **volume**, **upload a raw CSV**, and build a **bronze→silver→gold** pipeline in the no-code **Lakeflow Designer** that produces a governed `dim_facility`. *(`etl_lab/etl_lab_guide.md`)* |
+| 0:15–1:05 | **Foundations + ETL lab** | Create a **volume**, **upload a raw CSV**, and build a **bronze→silver→gold** pipeline in the no-code **Lakeflow Designer** that produces a governed `dim_facility`. *(Workbook, Part 0)* |
 | 1:05–1:15 | *Break* | |
 | 1:15–2:05 | **AI/BI Dashboard authoring** | Build charts on the shared dataset: aggregate outcomes by provider/facility, trends over time, drill-downs, filters, cross-filtering. *(Workbook, Parts 1–2)* |
 | 2:05–2:15 | *Break* | |

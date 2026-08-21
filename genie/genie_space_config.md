@@ -7,7 +7,7 @@ well documented, and how it connects to the AI/BI dashboard they just built.
 
 There is also a **pre-built standalone Genie space as a backup** (in case the live publish hiccups):
 - Build it on the five tables: `{{CATALOG}}.{{SCHEMA}}.{fact_encounters, dim_provider, dim_facility, dim_diagnosis, dim_procedure}`.
-- Record the space ID in `lab_guides/workshop_assets.md` once created, so both groups reuse it.
+- Record the space ID in `../workshop_assets.md` once created, so both groups reuse it.
 
 ## Why this works with so few instructions
 The dataset ships fully documented: every table has a description, every column has a comment, and
