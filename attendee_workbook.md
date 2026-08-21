@@ -408,7 +408,11 @@ Conventions:
   - `fact_encounters.total_paid` ← **reimbursement**, **amount paid**
 
   Now *"which doctors have the most encounters?"* and *"average LOS by hospital"* resolve without anyone knowing the column names.
-- **A SQL expression** — define a metric once, reused everywhere: add a measure **`readmission_rate` = `AVG(readmitted_30d) * 100`**.
+- **SQL expressions** — reusable, named metrics/filters. In Genie Code → the agent's **Instructions** → **add a SQL expression**; for each, give a **name**, paste the **SQL**, and mark it a *measure* or *filter*. Add:
+  - measure **`readmission_rate`** = `AVG(readmitted_30d) * 100`
+  - filter **`inpatient_only`** = `encounter_type = 'Inpatient'`
+
+  Now *"readmission rate by facility, inpatient only"* uses your governed definitions — same math every time, no re-deriving. *(Fuller set — `complication_rate`, `mortality_rate`, `avg_los` — is in `genie/genie_space_config.md`.)*
 - **An example query** — teach one full, validated answer. Add the question *"30-day readmission rate by facility, min 200 encounters"* with this SQL:
   ```sql
   SELECT f.facility_name, ROUND(AVG(e.readmitted_30d)*100,1) AS readmit_rate_pct, COUNT(*) AS encounters
