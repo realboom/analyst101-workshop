@@ -327,6 +327,34 @@ knows how to join things. We just add a few instructions on top."
 - Trust and governance: the end-user feedback options (**Yes / Fix it / Request review**), the
   **Analysis** view, and that Genie only sees tables you grant.
 
+### Optional: the before/after "tailoring" demo (instructor-driven)
+The most convincing way to prove the hints matter is a **before/after**: ask the same questions on a
+**bare agent** (tables only, no synonyms / SQL expressions / example query / instructions) and on the
+**tuned agent**, and compare. Keep it instructor-driven, not hands-on.
+
+**Design it around what each hint actually fixes** — on this clean, well-commented schema a generic
+question already answers fine, so a lazy before/after looks flat. Use these, where the contrast is
+structural:
+
+| Ask this | Bare agent (before) | Tuned agent (after) | Which hint |
+|---|---|---|---|
+| "What's the **bounce-back** rate by facility?" | doesn't know "bounce-back" = `readmitted_30d`; clarifies, guesses, or picks the wrong column | resolves to readmission rate | **synonym** `readmitted_30d ← bounce-back` |
+| "Average **LOS** by **hospital**" | "LOS" ambiguous; mapping unclear | clean answer | **synonyms** `length_of_stay_days ← LOS`, `facility_name ← hospital` |
+| "Which **doctors** have the highest readmission rate?" | top 10 dominated by providers with a handful of encounters at 100% (statistical noise) | credible list — applies the ≥200-encounter floor | **example query / ≥200 convention** |
+| "readmission rate" asked 3 ways ("what % readmitted", "readmit share", "bounce-back rate") | inconsistent forms: `0.14` vs `14` vs `14.2%` | same governed `AVG(readmitted_30d)*100`, one decimal | **SQL expression** `readmission_rate` |
+
+The **doctors-without-a-threshold** row is the money shot — analysts instantly recognize "the
+leaderboard is topped by tiny-sample flukes." The **bounce-back** row is the cleanest synonym contrast.
+The consistency row maps straight to deck **slide 6** ("same question, different SQL on different days").
+
+**Run it:** either build a second "bare" agent (tables only) alongside the tuned one and ask both side
+by side, or on one agent ask the questions *first*, then add the hints and re-ask. **Genie is
+non-deterministic** — a "before" can occasionally get it right and an "after" can occasionally slip —
+so **pre-run the exact questions the morning of** and pick the structural contrasts above, not marginal
+ones. (Also note: a Genie **SQL expression** never appears by name in the generated SQL — it's expanded
+inline — so you can't attribute the output to it by reading the SQL; the metric view / SQL functions on
+Day 2 *are* referenced by name, which is the observability contrast.)
+
 **Watch for:**
 - If creating the agent hiccups for someone, fall back to the **pre-built standalone Genie Agent**
   (`workshop_assets.md`) so the segment keeps moving.
