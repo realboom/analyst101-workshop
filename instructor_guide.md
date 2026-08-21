@@ -328,32 +328,40 @@ knows how to join things. We just add a few instructions on top."
   **Analysis** view, and that Genie only sees tables you grant.
 
 ### Optional: the before/after "tailoring" demo (instructor-driven)
-The most convincing way to prove the hints matter is a **before/after**: ask the same questions on a
-**bare agent** (tables only, no synonyms / SQL expressions / example query / instructions) and on the
-**tuned agent**, and compare. Keep it instructor-driven, not hands-on.
+Ask the same questions on a **bare agent** (tables only — no synonyms / SQL expressions / example
+query / instructions) and on the **tuned agent**, and compare. Keep it instructor-driven, not hands-on.
 
-**Design it around what each hint actually fixes** — on this clean, well-commented schema a generic
-question already answers fine, so a lazy before/after looks flat. Use these, where the contrast is
-structural:
+**Be honest about this schema first.** It's clean, small, and fully commented, so the bare agent is
+*already good* — that itself is the lesson ("the setup drives the answer": good names + comments +
+keys carry Genie). Don't stage this as "watch the bare agent fail on basic questions" — it won't, and
+a smart analyst audience will see through it. The following are **verified** on this dataset (asked on
+both agents); use these, not a strawman:
 
-| Ask this | Bare agent (before) | Tuned agent (after) | Which hint |
+| Ask this | Bare agent (verified) | Tuned agent (verified) | What it shows |
 |---|---|---|---|
-| "What's the **bounce-back** rate by facility?" | doesn't know "bounce-back" = `readmitted_30d`; clarifies, guesses, or picks the wrong column | resolves to readmission rate | **synonym** `readmitted_30d ← bounce-back` |
-| "Average **LOS** by **hospital**" | "LOS" ambiguous; mapping unclear | clean answer | **synonyms** `length_of_stay_days ← LOS`, `facility_name ← hospital` |
-| "Which **doctors** have the highest readmission rate?" | top 10 dominated by providers with a handful of encounters at 100% (statistical noise) | credible list — applies the ≥200-encounter floor | **example query / ≥200 convention** |
-| "readmission rate" asked 3 ways ("what % readmitted", "readmit share", "bounce-back rate") | inconsistent forms: `0.14` vs `14` vs `14.2%` | same governed `AVG(readmitted_30d)*100`, one decimal | **SQL expression** `readmission_rate` |
+| **"Which facilities are the most expensive?"** | *hedges* — picks `SUM(total_charges)`, then asks "average per encounter instead?" (ambiguous: total vs average, charges vs paid) | **decisive** — `AVG(total_charges)` per encounter, rounded, ranked, clean $ answer | tuning **resolves ambiguity** → a confident, consistent answer. The strongest live contrast. |
+| **Same metric asked a few ways** ("bounce-back rate by facility", "highest readmission doctors") | understands the terms, but the **shape varies** — raw fractions (`0.1255`), `SUM` vs `AVG`, sometimes a single `RANK()=1` row | consistent governed shape every time — `AVG(...)*100`, one decimal, `HAVING COUNT(*)>=200`, clean ranked list | **consistency** across phrasings — deck **slide 6** ("same question, different SQL on different days") |
 
-The **doctors-without-a-threshold** row is the money shot — analysts instantly recognize "the
-leaderboard is topped by tiny-sample flukes." The **bounce-back** row is the cleanest synonym contrast.
-The consistency row maps straight to deck **slide 6** ("same question, different SQL on different days").
+**What does *not* show a contrast here (say so if asked):** synonyms for well-named columns ("LOS" →
+`length_of_stay_days`, "bounce-back" → `readmitted_30d`) — the bare agent maps those from the column
+name + comment. And the ≥200-encounter floor is a **no-op** on this data (every provider has 271+
+encounters), so it never changes a ranking. On a real, cryptic schema (`PROV_RNDR_NPI`,
+`DSCHG_DISP_CD`) synonyms earn their keep; here they don't. That honesty *is* the credibility.
 
-**Run it:** either build a second "bare" agent (tables only) alongside the tuned one and ask both side
-by side, or on one agent ask the questions *first*, then add the hints and re-ask. **Genie is
-non-deterministic** — a "before" can occasionally get it right and an "after" can occasionally slip —
-so **pre-run the exact questions the morning of** and pick the structural contrasts above, not marginal
-ones. (Also note: a Genie **SQL expression** never appears by name in the generated SQL — it's expanded
-inline — so you can't attribute the output to it by reading the SQL; the metric view / SQL functions on
-Day 2 *are* referenced by name, which is the observability contrast.)
+**A nice tell:** the tuned agent's SQL visibly carries the **example query's house style** —
+`ROUND(...*100,1)` and `HAVING COUNT(*)>=200` show up even where not strictly needed — and it joined to
+the attendee's *own* `analyst101_<user>.dim_facility` (loop-closing working). That's the example query
+and the Part-0 table doing their jobs.
+
+**The real "wow" is Day 2, not here:** PCP continuity needs business logic Genie can't infer
+(standard-visits-only + attending-vs-assigned-PCP). A naive agent can't get it right; the trusted
+metric view / function does. Run that before/after in the Day-2 spotlight.
+
+**Run it:** ask on the bare agent and the tuned agent side by side (a pre-built bare agent, tables
+only, is fine). **Genie is non-deterministic** — the ambiguity hedge won't fire every single time — so
+**pre-run the exact questions the morning of**. (Also: a Genie **SQL expression** never appears by name
+in the generated SQL — it's expanded inline — so you can't attribute output to it by reading the SQL;
+the metric view / SQL functions on Day 2 *are* referenced by name, which is the observability contrast.)
 
 **Watch for:**
 - If creating the agent hiccups for someone, fall back to the **pre-built standalone Genie Agent**
