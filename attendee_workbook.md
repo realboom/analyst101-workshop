@@ -400,7 +400,14 @@ Conventions:
 
 **Step 4 · Add SQL-based context — this is what really tunes Genie.** Free text is the *last* resort; **SQL-based context is more reliable**. Add a few high-value pieces in Genie Code (the same levers Databricks Day goes deep on):
 
-- **A synonym** (maps an everyday word to a **column** — synonyms attach to columns, not tables). In Genie Code, open the data source → **Edit column metadata** → pick `dim_provider.provider_name` → add synonyms **`doctor`, `physician`**. Now *"which doctors have the most encounters?"* resolves. *(Other good ones: `length_of_stay_days` ← "LOS"; `facility_name` ← "hospital", "clinic".)*
+- **Synonyms** — map everyday words to a **column** (synonyms attach to columns, not tables). In Genie Code → the data source → **Edit column metadata** → pick the column → **Synonyms** field. Add each of these:
+  - `dim_provider.provider_name` ← **doctor**, **physician**
+  - `dim_facility.facility_name` ← **hospital**, **clinic**, **site**
+  - `fact_encounters.length_of_stay_days` ← **LOS**, **length of stay**
+  - `fact_encounters.readmitted_30d` ← **readmission**, **readmit**, **bounce-back**
+  - `fact_encounters.total_paid` ← **reimbursement**, **amount paid**
+
+  Now *"which doctors have the most encounters?"* and *"average LOS by hospital"* resolve without anyone knowing the column names.
 - **A SQL expression** — define a metric once, reused everywhere: add a measure **`readmission_rate` = `AVG(readmitted_30d) * 100`**.
 - **An example query** — teach one full, validated answer. Add the question *"30-day readmission rate by facility, min 200 encounters"* with this SQL:
   ```sql

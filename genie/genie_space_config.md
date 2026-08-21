@@ -49,10 +49,13 @@ explicit **relationship** (slide 8's "define join relationships explicitly"), no
 
 ### 2. Column synonyms (map everyday words to a column)
 Synonyms attach to **columns, not tables** — add them in Genie Code → the data source → **Edit column
-metadata** → the column's **Synonyms** field (scoped to this agent). Good ones for this schema:
+metadata** → the column's **Synonyms** field (scoped to this agent). Add each of these:
 - `dim_provider.provider_name` ← **doctor**, **physician**, **clinician**
 - `dim_facility.facility_name` ← **hospital**, **clinic**, **site**
 - `fact_encounters.length_of_stay_days` ← **LOS**, **length of stay**
+- `fact_encounters.readmitted_30d` ← **readmission**, **readmit**, **bounce-back**
+- `fact_encounters.total_paid` ← **reimbursement**, **amount paid**
+- `dim_diagnosis.clinical_category` ← **service line**, **specialty area**
 
 *(Two non-synonyms to skip: a grain-level term like "visit" = encounter isn't a column, so it's not a
 synonym — Genie already maps "visits" to `fact_encounters` from the table comment. And don't map every
