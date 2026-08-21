@@ -20,7 +20,7 @@
 # MAGIC %md
 # MAGIC ## Step 0a · Create the input widgets
 # MAGIC Run this cell **once**. The eight input boxes appear at the **top of the notebook** — fill them
-# MAGIC in there, then run Step 0b. (For RCH: profile `pediatric`, headline surgery `tonsillectomy` / `42820`.)
+# MAGIC in there, then run Step 0b. (For a pediatric audience: profile `pediatric`, headline surgery `tonsillectomy` / `42820`.)
 
 # COMMAND ----------
 
@@ -161,7 +161,7 @@ import json
 
 with open("../dashboard/workshop.lvdash.json") as f:
     dash = f.read()
-for tok, val in {"{{CATALOG}}": CATALOG, "{{SCHEMA}}": SCHEMA, "{{CLIENT_NAME}}": CLIENT,
+for tok, val in {"{{CATALOG}}": CATALOG, "{{SCHEMA}}": SCHEMA,
                  "{{PROCEDURE_EXAMPLE}}": PROC_EX, "{{PROCEDURE_CODE}}": PROC_CODE}.items():
     dash = dash.replace(tok, val)
 

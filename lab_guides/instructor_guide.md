@@ -1,4 +1,4 @@
-# Instructor Guide - {{CLIENT_NAME}} Analyst 101 Workshop (AI/BI half)
+# Instructor Guide — Analyst 101 Workshop (AI/BI half)
 
 **For:** workshop facilitators (lead + floating support).
 **Audience:** a mixed group of analysts/business users — some SQL-comfortable, some newer to
@@ -42,7 +42,7 @@ rabbit-hole.
 
 ## Pre-flight checklist (do the day before)
 
-- [ ] Dataset generated into `{{CATALOG}}.{{SCHEMA}}` in the {{CLIENT_NAME}} workspace
+- [ ] Dataset generated into `{{CATALOG}}.{{SCHEMA}}` in the workshop workspace
       (run `data_generation/generate_workshop_data.py`; see `../TEMPLATE.md`).
 - [ ] All 3 attendees can log into the workspace and have SELECT on `{{CATALOG}}.{{SCHEMA}}`.
 - [ ] A SQL warehouse (serverless or pro) is running, or set to auto-start.
@@ -55,7 +55,7 @@ rabbit-hole.
 - [ ] Decide: do attendees each clone the starter dashboard, or build their own from scratch?
       (Recommended: build their own on Day 1 so they learn the authoring flow; reference the
       starter when they get stuck.)
-- [ ] Dry-run option: rehearse the full flow in a staging schema before the {{CLIENT_NAME}}
+- [ ] Dry-run option: rehearse the full flow in a staging schema before the workshop
       workspace is set up (see `workshop_assets.md`).
 
 ---
@@ -119,8 +119,10 @@ at the real analysis."
    ranked, risk-binned scorecard with no table-calc plumbing.
 3. `Outcome trend` dataset: the `LAG` period-over-period + windowed rolling-average query. Add a
    **Combo** chart (bars = encounters, line = `rolling_3mo` on a second axis).
-4. **Calculated measure + dimension (no code):** add a calculated measure (paid-to-charge ratio) and a
-   calculated dimension (age band via CASE). Their Tableau calculated field, in the dataset.
+4. **Calculated fields (no code):** on a small row-level dataset from `fact_encounters`, add a
+   calculated dimension (`age_band` via CASE) plus calculated measures for average charges and average
+   paid, then chart cost by age band. Their Tableau calculated field, in the dataset. (Dropped the old
+   paid-to-charge ratio — on the synthetic data it was flat and unconvincing.)
 
 **Point out:**
 - `PERCENT_RANK` / `NTILE` = their rank table calcs; `LAG` and the windowed `AVG` = running/difference
@@ -271,7 +273,7 @@ dashboards). Facilitators float. Starter scenarios are in the Attendee Workbook,
 
 ## Segment 3 - Wrap and next steps (1:40-1:50)
 - Map to reality: "Everything you did sits on synthetic data, but the exact same flow works on your
-  real {{CLIENT_NAME}} tables once they're in Databricks." Note Unity Catalog governance and that metric
+  real tables once they're in Databricks." Note Unity Catalog governance and that metric
   views keep definitions consistent.
 - Be honest about trade-offs one more time, and capture the team's read (this is the sponsor's assessment
   to advise other teams).
@@ -303,7 +305,7 @@ Be accurate and do not over-promise a product button.
   a locked-down workspace there's networking to punch through. Part of their data already flows from
   Databricks to Tableau, so the connection pattern exists. AI/BI skips that hop entirely.
 - **"Is this a big new cost?"** No large net-new cost: the data is already in Databricks and AI/BI uses
-  the same compute. (Relevant given the cost-control focus on the {{CLIENT_NAME}}/Scripius side.)
+  the same compute. (Relevant for cost-conscious teams.)
 - **"What about pixel-perfect formatting / specific chart types?"** Tableau is still ahead on some of
   this. Name it honestly; show what AI/BI does well and where the trade-off lands.
 - **"Does Genie make things up?"** It generates SQL you can inspect and correct; it only sees granted

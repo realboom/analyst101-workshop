@@ -135,13 +135,22 @@ FROM m
 - **Line (right/secondary Y):** `rolling_3mo` (the smooth trend line).
 - **Sort:** X axis ascending by `month`.
 
-**Step 5 · Add calculated fields (no code).** You don't have to do everything in SQL.
+**Step 5 · Add calculated fields (no code).** You don't have to do everything in SQL — you can add calculated fields right on a dataset, just like a Tableau calculated field. We'll build an **age band** and look at **cost by age band** (charges vs. what was actually paid).
 
-- On the `Provider performance` dataset (or any dataset), in the **Data** tab, add a **calculated measure** with a formula, for example a paid-to-charge ratio: `SUM(total_paid) / SUM(total_charges)`. (Use a dataset that carries `total_paid` and `total_charges` if you want this one, e.g. build it on `fact_encounters`.)
-- Add a **calculated dimension** that bins a field, for example an age band. This needs a dataset with **row-level `patient_age`** — build a small one on `fact_encounters` (e.g. `SELECT patient_age, readmitted_30d, total_paid FROM <catalog>.<schema>.fact_encounters`); the aggregated `Provider performance` dataset has no `patient_age`, so the band won't work there. Use the band that fits your population:
+A field that bins a row needs **row-level** columns, so first build a small dataset on `fact_encounters`:
+
+- **Data** tab → **Create from SQL** → paste the query below → name it `Cost by patient`.
+
+```sql
+SELECT patient_age, total_charges, total_paid, readmitted_30d
+FROM {{CATALOG}}.{{SCHEMA}}.fact_encounters
+```
+
+- **Calculated dimension — `age_band`.** On the `Cost by patient` dataset, add a **calculated dimension** that bins `patient_age` with a CASE. Use the band that fits your population:
   - **Adult:** `CASE WHEN patient_age < 40 THEN '<40' WHEN patient_age < 65 THEN '40-64' ELSE '65+' END`
   - **Pediatric:** `CASE WHEN patient_age < 1 THEN '<1 (infant)' WHEN patient_age < 5 THEN '1-4' WHEN patient_age < 13 THEN '5-12' ELSE '13-18' END`
-- Use them in any visual (as a column, axis, or color). They recompute automatically as filters change.
+- **Calculated measures — average cost.** On the same dataset, add two **calculated measures**: `avg_charges` = `AVG(total_charges)` and `avg_paid` = `AVG(total_paid)`. *(Optional combined measure: `AVG(total_charges - total_paid)` = the average unpaid gap per encounter.)*
+- **Put it on the canvas.** Add a **Bar** chart. **X axis:** `age_band`. **Y axis:** `avg_charges` and `avg_paid` (two bars per band). Now you can see how charged vs. paid amounts move across age bands — and it recomputes automatically as filters change.
 
 > **Tableau translation:** `PERCENT_RANK` / `NTILE` replace your rank table calcs; `LAG` and the windowed `AVG` replace the running/difference table calcs and the trailing-average trick; the calculated measure/dimension is your calculated field. They live in the dataset, governed and reusable, instead of per-worksheet.
 

@@ -2,8 +2,10 @@
 # engagement notes). Keep them out of the public repo.
 clients/
 
-# OS / editor cruft
+# OS / editor / tool cruft
 .DS_Store
+.vscode/
+.databricks/
 
 # Python bytecode
 __pycache__/

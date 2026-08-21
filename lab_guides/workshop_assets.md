@@ -44,7 +44,7 @@ GRANT CREATE SCHEMA ON CATALOG {{CATALOG}} TO `analyst101_attendees`;
 ```
 > In the ETL lab, each attendee runs `CREATE SCHEMA {{CATALOG}}.analyst101_<their-name>` themselves.
 
-## Pre-workshop checklist (in the {{CLIENT_NAME}} workspace)
+## Pre-workshop checklist (in the workshop workspace)
 - [ ] Run the data generator into `{{CATALOG}}.{{SCHEMA}}`.
 - [ ] Grant the workshop group `USE CATALOG` + `CREATE SCHEMA` on `{{CATALOG}}` and `SELECT` on the shared schema (above). Attendees create their own schema in the lab.
 - [ ] Serverless compute available (Designer + SQL) and a SQL warehouse running.

@@ -1,4 +1,4 @@
-# {{CLIENT_NAME}} Analyst 101 Workshop — Agenda
+# Analyst 101 Workshop — Agenda
 
 **Audience:** analysts and business users, mixed Databricks familiarity.
 **Format:** Hands-on, light on theory. Everyone in the workspace doing the clicks.

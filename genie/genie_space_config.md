@@ -1,4 +1,4 @@
-# Genie Space - {{CLIENT_NAME}} Workshop
+# Genie Space — Analyst 101 Workshop
 
 In the workshop, each analyst stands up a Genie space **from their own published dashboard**
 (see the handbooks, Day 1 Genie segment), then pastes in the instructions below and asks a few

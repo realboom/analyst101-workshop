@@ -31,7 +31,7 @@
             "name": "title",
             "multilineTextboxSpec": {
               "lines": [
-                "# {{CLIENT_NAME}} Workshop - Encounters & Outcomes"
+                "# Analyst 101 Workshop - Encounters & Outcomes"
               ]
             }
           },

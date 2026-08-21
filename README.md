@@ -24,10 +24,13 @@ session** reuses exactly the data analysts built in the workshop. One dataset, t
 
 ## How to use it
 
-This is a **template**. Fill the placeholder tokens (`{{CLIENT_NAME}}`, `{{CATALOG}}`, …) for your
-account, then provision and deploy. See **[`TEMPLATE.md`](TEMPLATE.md)** for tokens and the
-per-client setup checklist. Instantiate into a `clients/<name>/` overlay — those hold
-customer-identifying values, so they're kept **out of this public repo** (`clients/` is git-ignored).
+Setup is **notebook-driven** — no CLI, no local tools, no find/replace. Add this repo as a Databricks
+**Git folder**, open **[`notebooks/00_setup_workshop.py`](notebooks/00_setup_workshop.py)**, fill a few
+widgets (catalog, schema, profile, …), and run it: it builds the shared dataset, the advanced module,
+the AI/BI dashboard, and the Genie space, then grants attendees and smoke-tests the result. See
+**[`TEMPLATE.md`](TEMPLATE.md)** for the widgets and per-workshop setup. Keep any customer-identifying
+values in a `clients/<name>/` overlay — those are kept **out of this public repo** (`clients/` is
+git-ignored).
 
 **Pick a population profile.** The dataset comes in flavors — `adult` (acute care) and `pediatric`
 (children's health) — selected by the generator's `profile` widget. A profile
@@ -62,7 +65,9 @@ PCP-continuity metric is meaningful.
 ```
 analyst101-workshop/
 ├── README.md                     · this file
-├── TEMPLATE.md                   · placeholder tokens + per-client instantiate checklist
+├── TEMPLATE.md                   · setup-notebook widgets + per-workshop setup
+├── notebooks/
+│   └── 00_setup_workshop.py      · one-time notebook build (data, dashboard, Genie, grants, verify)
 ├── profiles/                     · population "flavor packs" — single source of truth per dataset
 │   ├── common.py                 · shared name pools, visit types, US-state map, messiness recipe
 │   ├── adult.py                  · adult / acute-care seed data
@@ -91,6 +96,6 @@ analyst101-workshop/
 ## Prerequisites
 
 - A Databricks workspace with **Unity Catalog** and **serverless** compute.
-- Attendee accounts with a **sandbox schema** each (`{{CATALOG}}.analyst101_<user>`) and the grants in
-  `TEMPLATE.md`, plus SELECT on the shared star schema.
-- Databricks CLI authenticated if you deploy from the CLI.
+- Attendee accounts with a **sandbox schema** each (`{{CATALOG}}.analyst101_<user>`) and the grants the
+  setup notebook applies, plus SELECT on the shared star schema.
+- This repo added as a **Git folder** in the workspace (that's how you run the setup notebook).
