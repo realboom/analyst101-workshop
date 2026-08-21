@@ -1,22 +1,28 @@
-# Genie Space — Analyst 101 Workshop
+# Genie Agent — Analyst 101 Workshop
 
-In the workshop, each analyst stands up a Genie space **from their own published dashboard**
-(see the handbooks, Day 1 Genie segment), then pastes in the instructions below and asks a few
-questions. The point is to show how little it takes to get a good Genie space when the data is
-well documented, and how it connects to the AI/BI dashboard they just built.
+> **Naming:** "Genie spaces" are now **Genie Agents** in the UI (create via the **Genie Agents**
+> sidebar → **New**). The API endpoint is still `/api/2.0/genie/spaces`.
 
-There is also a **pre-built standalone Genie space as a backup** (in case the live publish hiccups):
+In the workshop, each analyst stands up a **Genie Agent** on the shared tables (Genie Agents → New →
+select tables → Create; **Genie Code** launches to configure it), then pastes in the instructions
+below and asks a few questions. The point is to show how little it takes to get a good agent when the
+data is well documented, and how it connects to the AI/BI dashboard they just built. *(A published
+dashboard's **Ask Genie** box is a quick embedded ask on that dashboard's data — handy, but not the
+full agent.)*
+
+The setup notebook builds this as a **pre-built standalone Genie Agent** (backup + Databricks Day
+driver):
 - Build it on the five tables: `{{CATALOG}}.{{SCHEMA}}.{fact_encounters, dim_provider, dim_facility, dim_diagnosis, dim_procedure}`.
-- Record the space ID in `../workshop_assets.md` once created, so both groups reuse it.
+- Record the agent ID in `../workshop_assets.md` once created, so both groups reuse it.
 
 ## Why this works with so few instructions
 The dataset ships fully documented: every table has a description, every column has a comment, and
 primary/foreign keys are defined. Genie uses the comments to understand fields and the foreign keys
 to join tables automatically, so you mostly just need to pin down metric definitions and conventions.
 
-## Paste this into the Genie space "Instructions"
+## Paste this into the agent's "Instructions"
 ```
-This Genie space answers questions about synthetic hospital encounters. There is no PHI.
+This Genie Agent answers questions about synthetic hospital encounters. There is no PHI.
 
 Data model:
 - fact_encounters is the central fact table, one row per patient encounter.

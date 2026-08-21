@@ -24,7 +24,7 @@
 | 1:15–2:05 | **AI/BI Dashboard authoring** | Build charts on the shared dataset: aggregate outcomes by provider/facility, trends over time, drill-downs, filters, cross-filtering. *(Workbook, Parts 1–2)* |
 | 2:05–2:15 | *Break* | |
 | 2:15–2:50 | **AI-assisted authoring + the semantic layer** | Build visuals from a prompt; introduce **metric views** as governed, reusable metric definitions. *(Workbook, Part 3)* |
-| 2:50–3:15 | **Ask Genie** | Create a **Genie space** and ask questions in plain language, with the generated SQL shown. Wrap & how this maps to your real data. *(Workbook, Genie segment + `genie/genie_space_config.md`)* |
+| 2:50–3:15 | **Ask Genie** | Create a **Genie Agent** and ask questions in plain language, with the generated SQL shown. Wrap & how this maps to your real data. *(Workbook, Genie segment + `genie/genie_space_config.md`)* |
 
 **Shorter (~2h) variant:** Orientation (10) → ETL lab (45) → Dashboard authoring (45) →
 Ask Genie (20). Drop the semantic-layer segment and advanced drill-downs.

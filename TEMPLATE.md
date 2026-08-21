@@ -3,7 +3,7 @@
 This repo is a **reusable Analyst 101 workshop template**. Setup is **notebook-driven** — there is no
 find/replace step and no CLI. You add the repo as a Databricks **Git folder**, open one setup
 notebook, fill a few widgets, and run it. The notebook builds the shared dataset, the advanced
-module, the dashboard, and the Genie space, then grants the attendees and smoke-tests the result.
+module, the dashboard, and the Genie Agent, then grants the attendees and smoke-tests the result.
 
 ## One-time setup (per workshop workspace)
 

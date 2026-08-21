@@ -13,13 +13,13 @@ patient's **assigned PCP**. It's a real quality measure, and it's a clean way to
 capabilities on one metric:
 
 - **Metric View** — `pcp_continuity_metrics` defines the ratio **once**, in YAML, governed by
-  Unity Catalog. Every dashboard, notebook, and Genie Space computes it identically. No more
+  Unity Catalog. Every dashboard, notebook, and Genie Agent computes it identically. No more
   "whose number is right?"
 - **SQL functions** — `pcp_continuity_ratio(...)`, `standard_visit_count(...)`, and the table
   function `pcp_continuity_by_provider(...)` package the logic so anyone (including Genie) can
   call it with a date window / facility instead of re-deriving joins.
 - **Trusted assets → Genie accuracy** — register the metric view and functions as **trusted
-  assets** in a Genie space so plain-language questions resolve to the governed definitions, not
+  assets** in a Genie Agent so plain-language questions resolve to the governed definitions, not
   ad-hoc SQL. This is the accuracy story: the answer is right *because* the definition is governed.
 
 ## Prerequisites
@@ -43,8 +43,8 @@ the ratio is realistic and varies by facility, ~55–90%).
    SELECT `Facility`, MEASURE(`PCP Continuity Ratio`)                         -- metric view
      FROM {{CATALOG}}.{{SCHEMA}}.pcp_continuity_metrics GROUP BY `Facility`;   -- measures need MEASURE()
    ```
-4. In a Genie space over `{{CATALOG}}.{{SCHEMA}}`, add the metric view and the functions as
-   **trusted assets / example SQL** (see `../genie/genie_space_config.md` for the base space).
+4. In a Genie Agent over `{{CATALOG}}.{{SCHEMA}}`, add the metric view and the functions as
+   **trusted assets / example SQL** (see `../genie/genie_space_config.md` for the base agent).
    Then ask: *"What's our PCP continuity rate?"*, *"Which providers have the lowest continuity
    with at least 200 standard visits?"*, *"Show continuity by facility by month."*
 

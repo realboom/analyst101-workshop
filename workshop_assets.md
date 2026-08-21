@@ -27,7 +27,7 @@ Fill this in per client when you instantiate (see `../TEMPLATE.md`). All data is
 
 ## Deployed assets (record IDs after you create them)
 - **Dashboard:** import `dashboard/workshop.lvdash.json` (targets `{{CATALOG}}.{{SCHEMA}}`). ID: `<fill>`
-- **Genie space:** create per `genie/genie_space_config.md`. ID: `<fill>`
+- **Genie Agent:** create per `genie/genie_space_config.md`. ID: `<fill>`
 - **Orientation slides (optional):** `<link, if used>`
 
 ## Grants (one-time, to the workshop group — not per attendee)
@@ -50,6 +50,6 @@ GRANT CREATE SCHEMA ON CATALOG {{CATALOG}} TO `analyst101_attendees`;
 - [ ] Serverless compute available (Designer + SQL) and a SQL warehouse running.
 - [ ] The profile's `etl_lab/facilities_raw.<profile>.csv` shared with attendees (or pre-staged).
 - [ ] Import `dashboard/workshop.lvdash.json`; confirm widgets render.
-- [ ] Create the Genie space; confirm it answers the {{PROCEDURE_EXAMPLE}} sample question.
+- [ ] Create the Genie Agent; confirm it answers the {{PROCEDURE_EXAMPLE}} sample question.
 - [ ] Dry-run the ETL lab end-to-end once (12 clean rows + lineage graph).
 - [ ] Record dashboard + Genie IDs above so both groups reuse them.

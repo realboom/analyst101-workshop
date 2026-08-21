@@ -47,10 +47,10 @@ rabbit-hole.
 - [ ] All 3 attendees can log into the workspace and have SELECT on `{{CATALOG}}.{{SCHEMA}}`.
 - [ ] A SQL warehouse (serverless or pro) is running, or set to auto-start.
 - [ ] Dashboard imported (`dashboard/{{SCHEMA}}.lvdash.json`) and every widget renders.
-- [ ] Confirm you can publish a dashboard and create a Genie space from it in this workspace
+- [ ] Confirm you can create a Genie Agent (**Genie Agents → New** → pick tables) in this workspace
       (so the live Day-1 flow works), and have the paste-in instructions block handy.
-- [ ] (Backup) Pre-built standalone Genie space created and answers the {{PROCEDURE_EXAMPLE}} question,
-      in case the live publish step hiccups.
+- [ ] (Backup) Pre-built standalone Genie Agent created and answers the {{PROCEDURE_EXAMPLE}} question,
+      in case creating one live hiccups.
 - [ ] Slide deck open and ready to present.
 - [ ] Decide: do attendees each clone the starter dashboard, or build their own from scratch?
       (Recommended: build their own on Day 1 so they learn the authoring flow; reference the
@@ -267,23 +267,28 @@ governed definition layer (the Tableau published-data-source parity story).
 
 ---
 
-## Segment 4 - Publish your dashboard and stand up its Genie space (3:05-3:40)
+## Segment 4 - Publish your dashboard and stand up a Genie Agent (3:05-3:40)
 
-**Goal:** Each analyst publishes the dashboard they just built, creates a Genie space directly from
-it, pastes in a short instructions block, and asks a few questions. This is the centerpiece: it shows
-how AI/BI and Genie connect, and how little it takes to get a good Genie space when the data is well
+> **Naming note:** "Genie spaces" are now **Genie Agents** in the UI. Creating one *from a dashboard*
+> is no longer a reliable button — create the agent from the **Genie Agents** sidebar on the same
+> tables. The published dashboard's **Ask Genie** box is a quick embedded ask, not the full agent.
+
+**Goal:** Each analyst publishes the dashboard they just built, creates a **Genie Agent** on the same
+data, pastes in a short instructions block, and asks a few questions. This is the centerpiece: it shows
+how AI/BI and Genie connect, and how little it takes to get a good agent when the data is well
 documented. Best segment for the skeptic.
 
-**Say:** "You just built a dashboard. Watch how fast we can turn that into a Genie space anyone can
-ask questions of. The reason it works so well, with almost no setup, is that this data is fully
+**Say:** "You just built a dashboard. Watch how fast we can stand up a Genie Agent anyone can ask
+questions of. The reason it works so well, with almost no setup, is that this data is fully
 documented: every column has a description and the table relationships are defined, so Genie already
 knows how to join things. We just add a few instructions on top."
 
-**Do (Workbook Part 4) - everyone on their own dashboard:**
+**Do (Workbook Part 4) - everyone on their own:**
 1. **Publish** your dashboard (top-right **Publish**).
-2. From the dashboard, **create a Genie space from it** (the Genie / "Create Genie space" control on
-   the dashboard). This generates a space using your dashboard's data.
-3. Open the new Genie space, go to **Instructions**, and **paste the prepared instructions block**
+2. Left sidebar → **Genie Agents** → **New** → select the shared tables (`fact_encounters`,
+   `dim_provider`, `dim_facility`, `dim_diagnosis`, `dim_procedure`) → **Create**. **Genie Code**
+   launches automatically.
+3. In **Genie Code** (the agent's **Instructions** area), **paste the prepared instructions block**
    (in `genie/genie_space_config.md`, also pre-shared in the Workbook). Save.
 4. Let the **attendees drive**. Have them ask a few:
    - "How many encounters were there in 2024 by region?"
@@ -301,8 +306,8 @@ knows how to join things. We just add a few instructions on top."
   **Analysis** view, and that Genie only sees tables you grant.
 
 **Watch for:**
-- If the publish-to-Genie step misbehaves for someone, fall back to the **pre-built standalone Genie
-  space** (`workshop_assets.md`) so the segment keeps moving.
+- If creating the agent hiccups for someone, fall back to the **pre-built standalone Genie Agent**
+  (`workshop_assets.md`) so the segment keeps moving.
 - If Genie gets one wrong, that's a feature, not a failure. Use **Fix it** to show the human-in-the-loop
   loop. Do not hide it.
 

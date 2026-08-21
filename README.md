@@ -9,7 +9,7 @@ Two halves, one dataset:
 1. **Foundations + ETL** — attendees create a Unity Catalog **volume**, upload a messy CSV, and
    use the no-code **Lakeflow Designer** visual ETL builder to build a **bronze → silver → gold**
    medallion pipeline that produces a governed `dim_facility` table.
-2. **AI/BI** — attendees build an **AI/BI dashboard** and stand up a **Genie** space on the
+2. **AI/BI** — attendees build an **AI/BI dashboard** and stand up a **Genie Agent** on the
    pre-built star schema, so they see governed tables turn into interactive analytics and
    plain-language Q&A.
 
@@ -27,7 +27,7 @@ session** reuses exactly the data analysts built in the workshop. One dataset, t
 Setup is **notebook-driven** — no CLI, no local tools, no find/replace. Add this repo as a Databricks
 **Git folder**, open **[`notebooks/00_setup_workshop.py`](notebooks/00_setup_workshop.py)**, fill a few
 widgets (catalog, schema, profile, …), and run it: it builds the shared dataset, the advanced module,
-the AI/BI dashboard, and the Genie space, then grants attendees and smoke-tests the result. See
+the AI/BI dashboard, and the Genie Agent, then grants attendees and smoke-tests the result. See
 **[`TEMPLATE.md`](TEMPLATE.md)** for the widgets and per-workshop setup. Keep any customer-identifying
 values in a `clients/<name>/` overlay — those are kept **out of this public repo** (`clients/` is
 git-ignored).
@@ -50,7 +50,7 @@ facilities_raw.<profile>.csv ──upload──► UC Volume ──Lakeflow Desi
                                              │
                      ┌───────────────────────┼───────────────────────┐
                      ▼                        ▼                        ▼
-              AI/BI Dashboard           Genie Space          advanced_module/
+              AI/BI Dashboard           Genie Agent          advanced_module/
                                                         (Metric View + SQL functions,
                                                          PCP continuity → Databricks Day)
 ```
@@ -83,7 +83,7 @@ analyst101-workshop/
 │   ├── facilities_raw.adult.csv  · messy source extract (adult) — derived from profiles/adult
 │   └── facilities_raw.pediatric.csv · messy source extract (pediatric)
 ├── dashboard/workshop.lvdash.json· starter AI/BI (Lakeview) dashboard
-├── genie/genie_space_config.md   · Genie space setup: instructions + sample questions
+├── genie/genie_space_config.md   · Genie Agent setup: instructions + sample questions
 ├── advanced_module/              · optional "go deeper" layer (Databricks Day / advanced session)
 │   ├── continuity_assets.sql     · metric view + SQL functions + enriched view (PCP continuity)
 │   └── README.md                 · deploy steps + demo talk track (Metric Views, functions, Genie)

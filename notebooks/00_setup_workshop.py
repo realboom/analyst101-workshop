@@ -3,7 +3,7 @@
 # MAGIC # Analyst 101 — one-time workshop setup
 # MAGIC
 # MAGIC Run this **once per workspace** before the workshop to build the shared dataset, dashboard, and
-# MAGIC Genie space. It's the "Step 0" the attendees never do — they only build their own `dim_facility`
+# MAGIC Genie Agent. It's the "Step 0" the attendees never do — they only build their own `dim_facility`
 # MAGIC in the ETL lab. All data is **synthetic — no PHI**.
 # MAGIC
 # MAGIC **Prerequisites:** this notebook lives inside the repo you added as a **Git folder**
@@ -180,7 +180,7 @@ print(f"✅ dashboard published: {host}/dashboardsv3/{DASHBOARD_ID}/published")
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## Step 4 · Create the Genie space
+# MAGIC ## Step 4 · Create the Genie Agent
 # MAGIC Builds the space on the 9 star-schema objects, registers the metric view + 3 functions as
 # MAGIC trusted assets, sets the instructions + sample questions, and creates it via the SDK.
 # MAGIC (Creates a new space each run.)
@@ -190,7 +190,7 @@ print(f"✅ dashboard published: {host}/dashboardsv3/{DASHBOARD_ID}/published")
 import uuid
 _id = lambda: uuid.uuid4().hex
 
-instructions = f"""This Genie space answers questions about synthetic hospital encounters. There is no PHI.
+instructions = f"""This Genie Agent answers questions about synthetic hospital encounters. There is no PHI.
 
 Data model:
 - fact_encounters is the central fact table, one row per patient encounter.
@@ -254,7 +254,7 @@ space = w.api_client.do("POST", "/api/2.0/genie/spaces", body={
     "serialized_space": serialized_space,
 })
 SPACE_ID = space.get("space_id") or space.get("id")
-print(f"✅ Genie space created: {host}/genie/rooms/{SPACE_ID}")
+print(f"✅ Genie Agent created: {host}/genie/rooms/{SPACE_ID}")
 
 # COMMAND ----------
 

@@ -351,25 +351,27 @@ FROM AI_FORECAST(TABLE(monthly), horizon => '2026-06-01', time_col => 'ds', valu
 
 ---
 
-## Part 4 - Publish your dashboard and turn it into a Genie space
+## Part 4 - Publish your dashboard and ask Genie
 
-Now the fun part. You'll publish the dashboard you just built, spin up a Genie space directly from it, give it a few instructions, and ask questions in plain language.
+Now the fun part. You'll publish the dashboard you just built, create a **Genie Agent** (this is what used to be called a "Genie space") on the same data, give it a few instructions, and ask questions in plain language.
 
 **Step 1 · Publish.**
 
-- Click **Publish** (top right) to publish your dashboard.
+- Click **Publish** (top right) to publish your dashboard. *(Your published dashboard also has an **Ask Genie** box at the bottom — a quick way to ask questions of just this dashboard's data. We'll build the full agent next.)*
 
-**Step 2 · Create a Genie space from the dashboard.**
+**Step 2 · Create a Genie Agent.**
 
-- From your published dashboard, use the **Genie** / "Create Genie space" control on the dashboard. This builds a Genie space on your dashboard's data.
+- In the left sidebar, click **Genie Agents** → **New** (top-right). *(If your workspace still says "Genie" / "Genie spaces," it's the same thing.)*
+- Choose your **data sources** — the shared tables in `{{CATALOG}}.{{SCHEMA}}`: `fact_encounters`, `dim_provider`, `dim_facility`, `dim_diagnosis`, `dim_procedure` — then click **Create**.
+- **Genie Code** launches automatically — that's the configuration surface where you add instructions and trusted assets.
 
 **Step 3 · Add instructions.**
 
-- Open the new Genie space and find the **Instructions** area. Paste in the block below (your instructor also shares it). Save.
+- In **Genie Code** (the agent's **Instructions** area), paste the block below (your instructor also shares it). Save.
 
 Instructions block to paste:
 ```
-This Genie space answers questions about synthetic hospital encounters. There is no PHI.
+This Genie Agent answers questions about synthetic hospital encounters. There is no PHI.
 
 Data model:
 - fact_encounters is the central fact table, one row per patient encounter.
@@ -429,7 +431,7 @@ Pick a scenario (yours, or one below) and build it. Instructors will float to he
 | {{PROCEDURE_EXAMPLE}} deep-dive | filtering to a procedure, trend | filter `primary_procedure_code = '{{PROCEDURE_CODE}}'`; trend LOS and readmit over time; split by facility |
 | Cost vs. outcome | two measures, scatter | `SELECT f.facility_name, AVG(e.total_paid) avg_paid, 100.0*SUM(e.readmitted_30d)/COUNT(*) readmit_rate FROM {{CATALOG}}.{{SCHEMA}}.fact_encounters e JOIN {{CATALOG}}.{{SCHEMA}}.dim_facility f USING(facility_id) GROUP BY 1` |
 | Payer mix by region | stacked bar, categorical split | `SELECT f.region, e.payer_type, COUNT(*) enc FROM {{CATALOG}}.{{SCHEMA}}.fact_encounters e JOIN {{CATALOG}}.{{SCHEMA}}.dim_facility f USING(facility_id) GROUP BY 1,2` |
-| Genie-first | NL querying, then save to dashboard | ask the Genie space, then add a good answer to a dashboard |
+| Genie-first | NL querying, then save to dashboard | ask the Genie Agent, then add a good answer to a dashboard |
 | Rebuild one of your Tableau dashboards | direct comparison | recreate a dashboard you know well and note what's easier and what's missing |
 
 **As you build, try at least one of each:**
