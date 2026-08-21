@@ -110,14 +110,26 @@ Today: **upload a raw facilities file → bronze → silver → gold `dim_facili
 
 - Back in **Catalog**, open `{{CATALOG}}.analyst101_<you>.dim_facility`. Confirm **12 rows**, clean `state` codes, proper-cased `facility_type`, and **no blank regions**.
 - Open the **Lineage** tab — you'll see **`facilities_raw.<profile>.csv` (volume) → `dim_facility` (table)**. UC lineage tracks *persisted objects*, so the bronze→silver→gold steps live **inside the pipeline** (open the operator graph in Visual Data Prep to see them). No code, and a governed, fully-lineaged pipeline you could schedule nightly.
-- *(Optional — the full dimension treatment)* add a primary key + comments:
-  ```sql
-  ALTER TABLE {{CATALOG}}.analyst101_<you>.dim_facility ALTER COLUMN facility_id SET NOT NULL;
-  ALTER TABLE {{CATALOG}}.analyst101_<you>.dim_facility ADD CONSTRAINT pk_dim_facility PRIMARY KEY (facility_id);
-  COMMENT ON TABLE {{CATALOG}}.analyst101_<you>.dim_facility IS 'Hospitals and clinics with type, city, state, region. One row per facility.';
-  ```
 
-> **What you just did:** turned a raw file into a governed, documented, business-ready table with a repeatable, no-code pipeline. This `dim_facility` is exactly the kind of table the AI/BI dashboards and Genie read in the rest of the workshop — so let's go use tables like it.
+**Step 6 · Make it Genie-ready — add comments and a key.** This is what makes your table *usable by Genie and the AI/BI Assistant* later. **The setup drives the answer:** table and column comments plus a declared key are the **context** these AI tools read — a well-annotated table gets good answers; a raw one gets guesses. Run this in a SQL editor or a notebook cell (or set the same comments in Catalog Explorer's UI):
+
+```sql
+COMMENT ON TABLE {{CATALOG}}.analyst101_<you>.dim_facility IS 'Hospitals and clinics with type, city, state, and region. One row per facility.';
+
+ALTER TABLE {{CATALOG}}.analyst101_<you>.dim_facility ALTER COLUMN facility_id SET NOT NULL;
+ALTER TABLE {{CATALOG}}.analyst101_<you>.dim_facility ADD CONSTRAINT pk_dim_facility PRIMARY KEY (facility_id);
+
+ALTER TABLE {{CATALOG}}.analyst101_<you>.dim_facility ALTER COLUMN facility_id   COMMENT 'Primary key. Unique identifier for the facility.';
+ALTER TABLE {{CATALOG}}.analyst101_<you>.dim_facility ALTER COLUMN facility_name COMMENT 'Hospital or clinic name.';
+ALTER TABLE {{CATALOG}}.analyst101_<you>.dim_facility ALTER COLUMN facility_type COMMENT 'Facility type (e.g., hospital, clinic, urgent care).';
+ALTER TABLE {{CATALOG}}.analyst101_<you>.dim_facility ALTER COLUMN city          COMMENT 'City where the facility is located.';
+ALTER TABLE {{CATALOG}}.analyst101_<you>.dim_facility ALTER COLUMN state         COMMENT 'Two-letter state code.';
+ALTER TABLE {{CATALOG}}.analyst101_<you>.dim_facility ALTER COLUMN region        COMMENT 'Business region grouping for the facility.';
+```
+
+- Reopen the table in **Catalog** — every column now has a description and `facility_id` is a primary key. That's the same treatment the **shared** tables ship with (open one and compare the comments + keys). In **Part 4** you'll point Genie at *this* table — and this annotation is exactly why it can answer facility questions reliably.
+
+> **What you just did:** turned a raw file into a governed, business-ready table with a repeatable no-code pipeline — then **annotated it so AI tools can read it**. This is the same kind of well-documented table the AI/BI dashboards and Genie use in the rest of the workshop. *(Databricks Day goes deeper on this: the setup — clean tables, precise comments, explicit joins, tight scope — is what drives a trustworthy answer, not a clever prompt.)*
 
 ---
 
@@ -408,7 +420,7 @@ Conventions:
 
 **Step 5 · Show the SQL.** On any answer, click **Show generated code** to see the Databricks SQL Genie wrote — for the facility/region questions you'll see it joining `fact_encounters` to *your* `analyst101_<you>.dim_facility`.
 
-> **Why this is so quick:** the dataset is fully documented (every column has a description and the table relationships are defined), so Genie already knows how to join the tables. You only add a few instructions on top.
+> **Why this works — the setup drives the answer.** Genie's quality comes from the *setup*, not clever prompting. The context it reads is: **well-annotated tables** (every column commented), **explicit joins and keys**, and a **tight scope** (≤5 well-modeled tables — the shared ones plus your `dim_facility`). That's why the shared tables just work — and it's exactly why you annotated your own `dim_facility` in **Part 0, Step 6**. Curated, documented tables beat raw wide ones. *(This is the Databricks Day theme — "maturing Genie": engineer accuracy into the setup, then pin the known-good answers.)*
 >
 > **For the SQL folks:** Genie writes Databricks SQL, so it's a fast way to see the correct syntax and functions when you translate from what you write today. Copy it and build on it.
 >

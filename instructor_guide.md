@@ -84,7 +84,9 @@ operator. By the end they have a lineage graph and a table they could schedule n
 Designer is new to most attendees. Demo Workbook Part 0 Steps 3–4 (start a build, add the bronze
 source) live on the projector once, then let them do it. Do **Silver together, operator by operator**,
 pausing on each live preview so they see the change. **Gold** they can mostly drive themselves; float
-and help.
+and help. Everyone then runs **Step 6** (table + column comments and a primary key) — don't skip it:
+it's the metadata that makes their `dim_facility` usable by Genie in Part 4, and it's the hands-on
+version of the Databricks Day slide-8 lesson (*the setup drives the answer*).
 
 ## What each messy element teaches (and the operator that fixes it)
 | In the raw file | Layer | Designer operator |
@@ -101,6 +103,21 @@ and help.
 This is a genuine ETL lesson, not a Databricks quirk. **Expected end state:** exactly **12 rows**,
 clean 2-letter states, proper-cased types, no null regions. (Validated per profile:
 `python etl_lab/build_raw_csv.py --all --check`.)
+
+## Step 6 — "make it Genie-ready" (the slide-8 metadata lesson)
+This is where the ETL lab connects to the Databricks Day *Maturing Genie* story (slides 6–9). Land the
+message from **slide 8** — *"start with the data, not the prompt; the setup drives the answer"*:
+- **Table + column comments and a declared key are the *context* Genie reads.** A well-annotated,
+  well-modeled table gets good answers; a raw, uncommented one gets guesses.
+- Their freshly-built `dim_facility` starts with **no comments and no key** (Designer doesn't add them),
+  so it's the perfect "before." Running Step 6's SQL is them *tailoring the table for Genie*.
+- Have them **reopen the table in Catalog and compare to a shared table** (e.g. `dim_provider`) — same
+  treatment: every column described, PK defined. Point out the shared tables ship this way, which is
+  why Genie answers well on them out of the box.
+- Tie forward: in **Part 4** they point Genie at *this* table; the annotation is why facility/region
+  questions resolve reliably. Also mention the other slide-8/9 levers we go deep on at Databricks Day —
+  **tight scope** (≤5 well-modeled tables), **explicit many-to-one joins**, and **SQL-based
+  instructions/example queries** over free text.
 
 ## Prerequisites BEFORE the session (one-time, group-level)
 - **Serverless compute** available (Designer runs on serverless).
@@ -126,9 +143,10 @@ clean 2-letter states, proper-cased types, no null regions. (Validated per profi
   then partition by City.
 
 ## If you're short on time
-Drop the optional PK/comments (Step 5) and any standalone silver materialization — a single Designer
-flow (bronze source → transforms → gold output) tells the whole story. Do **not** skip the lineage
-view; it's the payoff shot.
+Drop any standalone silver materialization — a single Designer flow (bronze source → transforms → gold
+output) tells the whole story. Do **not** skip the **lineage view** (the payoff shot) or **Step 6**
+(comments + key) — Step 6 is the Genie-context lesson and Part 4 points Genie at this table. If truly
+rushed, keep the table comment + PK + a couple of column comments rather than all six.
 
 ## The bridge to the AI/BI half
 Close with: *"The `dim_facility` you just built is the same kind of governed table the dashboards and
