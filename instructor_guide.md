@@ -381,36 +381,53 @@ the metric view / SQL functions on Day 2 *are* referenced by name, which is the 
 
 ---
 
-# DAY 2 - Build with your own scenario (~1h50, 12:00-1:50 CT)
+# DAY 2 - Advanced features + build-your-own (~1h50, 12:00-1:50 CT)
+
+Day 2 mirrors the **Databricks Day advanced half** (the "confidence stack": trusted SQL functions →
+metric views → trusted assets in Genie), then closes with a free-build capstone. All the advanced
+assets are pre-deployed on the shared schema (`pcp_continuity_metrics` + the 3 functions); see
+`advanced_module/README.md` for the deploy + the demo talk track that maps to the deck.
 
 ## Segment 0 - Recap and plan (12:00-12:10)
-- 60-second refresher. Lay out: ~50 minutes build, then share-outs.
-- Restate each analyst's scenario so expectations are set.
+- 60-second refresher. Lay out: advanced module (~40 min), then build + share-outs.
+- Frame the day: Day 1 was *fast* answers; Day 2 is *trustworthy* answers — governed metrics.
 
-## Segment 1 - Hands-on build (12:10-1:00)
-Each analyst builds on `{{CATALOG}}.{{SCHEMA}}` (or rebuilds one of their own Tableau
-dashboards). Facilitators float. Starter scenarios are in the Attendee Workbook, Day 2.
+## Segment 1 - Advanced features: governed metrics & trusted assets (12:10-12:55)
+Walk the **Workbook Day-2 Parts A–D** on the PCP-continuity use case. This is the hands-on version of
+your Databricks Day demo:
+- **Part A — SQL functions:** call `pcp_continuity_ratio()` / `pcp_continuity_by_provider()` by name;
+  deterministic, parameterized, `EXECUTE`-granted, logic hidden (PHI-safe). *(Deck slides 12–14.)*
+- **Part B — metric views:** query `pcp_continuity_metrics` with `MEASURE()`; re-slice by
+  `Facility` → `Region` → `Encounter Month`. Land the **query-time grouping** point — continuity is a
+  *ratio* (non-additive), so the view keeps it correct at every grain where a copy-pasted calc field
+  wouldn't. *(Slides 15–19.)*
+- **Part C — trusted assets + the benchmark:** register the view + function in the Genie Agent, ask
+  "PCP continuity by facility," and **Show generated code** → it calls the governed asset ("Trusted"
+  badge), best-effort vs. deterministic. *(Slides 12, 20.)*
+- **Part D — author your own:** the "go do this on your data" path — a metric-view measure
+  (AI-assisted or YAML) and a SQL function in their own schema.
 
-**Coaching cues by person:**
-- **Query-focused / skeptic:** push on metric views and the SQL behind visuals; let them drive Genie
-  and always reveal the SQL.
-- **Tableau-heavy / eager:** map each step to its Tableau equivalent; show cross-filtering and drill
-  as the "free" wins; if there's appetite, mention dashboard/widget JSON customization (a newer
-  AI/BI capability) as a power-user feature.
+**Coaching cues:** query-focused/skeptics love Parts A–C (governed, auditable, referenced by name);
+Tableau-heavy attendees — anchor the metric view to "published data source, but one definition for
+*every* tool." Keep authoring (Part D) light for a mixed room; it's a take-home pattern, not a stall point.
 
-### Break (1:00-1:10)
+> **Verify in the dry-run (inferred UI):** the **trusted assets** location in Genie Code, the
+> **"Trusted" badge**, and the **Catalog Explorer → Create → Metric view** AI-assisted authoring flow —
+> confirm the exact labels live and fix any that drift. The **before/after PCP-continuity benchmark**
+> (naive best-effort vs. trusted function) is the strong contrast — pre-run it to confirm the "before"
+> actually misses the standard-visits/assigned-PCP rules on this data.
 
-## Segment 2 - Share-outs and advanced asks (1:10-1:40)
-- Each analyst shares for 3-5 minutes: what they built, what surprised them.
+### Break (12:55-1:05)
+
+## Segment 2 - Capstone build + share-outs (1:05-1:45)
+Each analyst builds on `{{CATALOG}}.{{SCHEMA}}` (or rebuilds one of their own Tableau dashboards) —
+applying what they want, including a governed metric from Segment 1. Facilitators float; starter
+scenarios are in the Attendee Workbook capstone. Then each shares for 3–5 minutes: what they built,
+what surprised them.
 - Handle advanced asks live: drill hierarchies, calculated measures, Genie follow-ups, saving a
   Genie answer into a dashboard, and the publish/share/permissions story versus Tableau Server.
-- **Run the Workbook Day-2 spotlight — "Metric views & SQL functions."** It's the on-ramp to
-  Databricks Day: query the pre-built `pcp_continuity_metrics` metric view with `MEASURE()`, call the
-  trusted functions, and add them to a Genie Agent so a plain-English "PCP continuity by facility"
-  resolves to the *governed* definition. Message: define a metric once, reused identically in
-  dashboards and Genie = trustworthy NL BI. Deploy details + talk track are in `advanced_module/README.md`.
 
-## Segment 3 - Wrap and next steps (1:40-1:50)
+## Segment 3 - Wrap and next steps (1:45-1:50)
 - Map to reality: "Everything you did sits on synthetic data, but the exact same flow works on your
   real tables once they're in Databricks." Note Unity Catalog governance and that metric
   views keep definitions consistent.

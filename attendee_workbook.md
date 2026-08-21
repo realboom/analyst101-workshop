@@ -449,7 +449,106 @@ Jot down, for the wrap-up:
 
 ---
 
-# DAY 2 - Build your own scenario
+# DAY 2 - Advanced features: governed metrics & trusted assets
+
+Day 1 took you from a raw file to dashboards and a Genie Agent — *fast* answers. Day 2 is the **accuracy layer**: making answers *trustworthy*. It's the same arc as the Databricks Day session — the **confidence stack**, highest-confidence first:
+
+1. **SQL functions** — deterministic, callable, audited logic.
+2. **Metric views** — one governed definition of a metric, referenced by name everywhere.
+3. **Trusted assets in Genie** — plain-language questions resolve to those governed definitions instead of ad-hoc SQL.
+
+Everything runs on the **PCP continuity** use case, already built on the shared schema. *PCP continuity = the share of a patient's **standard** visits handled by their **assigned PCP** — a real quality measure with real business rules (standard visits only; attending must equal the assigned PCP). Those rules are exactly why it needs governing.* You'll **use** the pre-built assets first (Parts A–C), then see how to **author your own** (Part D).
+
+## Part A - SQL functions: deterministic, callable logic
+
+A SQL function packages logic once, so anyone — including Genie — calls it **by name** instead of re-deriving joins. It's registered in Unity Catalog and governed (grant `EXECUTE`; callers can't see or change the logic inside — ideal for PHI-sensitive clinical rules). Run these in a SQL editor:
+
+```sql
+-- one governed number (defaults span all dates + all facilities)
+SELECT {{CATALOG}}.{{SCHEMA}}.pcp_continuity_ratio() AS overall_continuity;
+
+-- parameterized: a date window
+SELECT {{CATALOG}}.{{SCHEMA}}.pcp_continuity_ratio('2025-01-01','2025-12-31') AS continuity_2025;
+
+-- a table function: rank providers by continuity
+SELECT provider_name, standard_visits, ROUND(continuity_ratio*100,1) AS continuity_pct
+FROM {{CATALOG}}.{{SCHEMA}}.pcp_continuity_by_provider()
+ORDER BY continuity_ratio DESC;
+```
+
+The parameters carry `DEFAULT`s and comments, so they're self-documenting. Same inputs → same result every time (**deterministic**) — unlike best-effort natural language, which can vary run to run.
+
+## Part B - Metric views: one metric, one number
+
+A **metric view** defines a measure **once**, in Unity Catalog, so every dashboard, notebook, and Genie Agent computes it identically. `pcp_continuity_metrics` is already built. Query its measures with `MEASURE()` and group by its dimensions:
+
+```sql
+-- continuity by facility
+SELECT `Facility`,
+       ROUND(MEASURE(`PCP Continuity Ratio`)*100,1) AS continuity_pct,
+       MEASURE(`Total Standard Visits`)             AS visits
+FROM {{CATALOG}}.{{SCHEMA}}.pcp_continuity_metrics
+GROUP BY `Facility`
+ORDER BY continuity_pct DESC;
+```
+
+Now change **one line** — `GROUP BY \`Region\`` or `GROUP BY \`Encounter Month\`` — and the *same* measure re-slices correctly, no re-deriving:
+
+```sql
+SELECT `Region`, ROUND(MEASURE(`PCP Continuity Ratio`)*100,1) AS continuity_pct
+FROM {{CATALOG}}.{{SCHEMA}}.pcp_continuity_metrics
+GROUP BY `Region` ORDER BY continuity_pct DESC;
+```
+
+> **Why this matters (query-time grouping):** continuity is a **ratio** — it's *non-additive*, so averaging facility ratios does **not** give the regional ratio. A metric view resolves the grouping **at query time** from the underlying counts, so the number is mathematically correct at every grain. That's the trap a copy-pasted calculated field falls into — and the reason to define it once, centrally.
+
+## Part C - Trusted assets in Genie + the benchmark
+
+Now wire the governed definitions into Genie so plain-language questions resolve to them.
+
+1. In your Genie Agent → **Genie Code** → **trusted assets**, add the metric view `pcp_continuity_metrics` and the function `pcp_continuity_ratio`.
+2. **Benchmark** — ask:
+   - *"What's our overall PCP continuity rate?"*
+   - *"Show PCP continuity by facility."*
+3. Click **Show generated code**. With the trusted asset registered, Genie **calls the governed function / metric view** (you'll see it by name in the SQL), and the answer carries a **"Trusted"** badge — deterministic, audited, and it matches the dashboard and the metric view exactly.
+
+> **Best-effort vs. deterministic** (the Databricks Day frame): *without* a trusted asset, Genie writes SQL on the fly — fine for open exploration, but it can miss the business rules (here: the **standard-visits-only** exclusion and the **assigned-PCP match**) and vary run to run. *With* the trusted function, the question that matters gets the same pre-approved answer every time. The practical move: list your top ~10 questions and pin a trusted answer to each.
+
+## Part D - Author your own (do this on your own data)
+
+You've *used* the governed assets — here's how to *create* them, so you can do this on your own tables later.
+
+**A metric view (AI-assisted or YAML).** In **Catalog Explorer → Create → Metric view**, pick a source table and use **AI-assisted authoring**, or write the YAML directly. A minimal measure on `fact_encounters`:
+
+```yaml
+version: 0.1
+source: {{CATALOG}}.{{SCHEMA}}.fact_encounters
+dimensions:
+  - name: Encounter Month
+    expr: date_trunc('MONTH', admit_date)
+measures:
+  - name: Readmission Rate
+    expr: AVG(readmitted_30d) * 100
+```
+
+Then query it like any metric view: `SELECT \`Encounter Month\`, MEASURE(\`Readmission Rate\`) FROM <your_view> GROUP BY \`Encounter Month\``. *(The full working DDL — the `CREATE VIEW ... WITH METRICS LANGUAGE YAML` wrapper — is in `advanced_module/continuity_assets.sql`.)*
+
+**A SQL function.** Package a rule so anyone (and Genie) can call it by name — build it in **your own** schema:
+
+```sql
+CREATE OR REPLACE FUNCTION {{CATALOG}}.analyst101_<you>.readmission_rate(p_start STRING, p_end STRING)
+RETURNS DOUBLE
+COMMENT 'Readmission rate (%) over the date window.'
+RETURN (SELECT AVG(readmitted_30d)*100
+        FROM {{CATALOG}}.{{SCHEMA}}.fact_encounters
+        WHERE admit_date BETWEEN to_date(p_start) AND to_date(p_end));
+```
+
+Grant `EXECUTE` to your Genie users, add it as a trusted asset, and it's callable — by people and by Genie. That's the whole confidence stack, on your own data.
+
+---
+
+# Capstone - build your own scenario
 
 Pick a scenario (yours, or one below) and build it. Instructors will float to help. Aim for something you can show the group in a few minutes. Same loop as Day 1: define a dataset on the Data tab, then add visualizations on the Canvas (set Dataset, Visualization type, and fields).
 
@@ -469,36 +568,7 @@ Pick a scenario (yours, or one below) and build it. Instructors will float to he
 - A filter and cross-filtering between two widgets.
 - A drill-down hierarchy.
 - A question in Genie, with the SQL revealed.
-
-## Spotlight: metric views & SQL functions — the governed semantic layer
-
-You've defined metrics a few ways now — a dashboard calculated measure, a Genie SQL expression. The catch: define "readmission rate" or "PCP continuity" in three places and you'll eventually get three slightly different numbers. A **metric view** fixes that — define a measure **once**, governed, and every dashboard, notebook, and Genie Agent computes it **identically**. This is the heart of the Databricks Day session; here's a first taste, using assets already built on the shared schema.
-
-**1 · Query the pre-built metric view.** `{{CATALOG}}.{{SCHEMA}}.pcp_continuity_metrics` defines PCP continuity once. Its measures are wrapped in `MEASURE()`; group by its dimensions:
-```sql
-SELECT `Facility`,
-       ROUND(MEASURE(`PCP Continuity Ratio`) * 100, 1) AS continuity_pct,
-       MEASURE(`Total Standard Visits`)                AS visits
-FROM {{CATALOG}}.{{SCHEMA}}.pcp_continuity_metrics
-GROUP BY `Facility`
-ORDER BY continuity_pct DESC;
-```
-Swap `Facility` for `Region` or `Encounter Month` — same governed measure, different slice, no re-deriving the ratio.
-
-**2 · Call the trusted SQL functions.** Reusable, governed logic (and Genie can call them):
-```sql
-SELECT {{CATALOG}}.{{SCHEMA}}.pcp_continuity_ratio() AS overall_continuity;   -- one governed number
-SELECT * FROM {{CATALOG}}.{{SCHEMA}}.pcp_continuity_by_provider()
-ORDER BY continuity_ratio DESC;                                              -- rank providers
-```
-
-**3 · Make them trusted assets in Genie.** In your Genie Agent (Genie Code → trusted assets), add the metric view `pcp_continuity_metrics` and the function `pcp_continuity_ratio`, then ask in plain English:
-- "What's the overall PCP continuity rate?"
-- "Show PCP continuity by facility."
-
-Click **Show generated code** — Genie calls the *governed* definition instead of hand-rolling the logic. That's the difference between *an* answer and a *trustworthy* one.
-
-> **On-ramp to Databricks Day:** one definition of a metric, used identically in dashboards and Genie, is how you make natural-language BI trustworthy. Databricks Day goes deep here — authoring metric views, registering trusted functions, and *pinning* known-good answers so Genie stops guessing. *(PCP continuity = the share of a patient's standard visits handled by their assigned PCP — the headline quality metric.)*
+- **(Advanced)** a governed metric — query `pcp_continuity_metrics` with `MEASURE()`, or call `pcp_continuity_ratio()`, from Parts A–B.
 
 **Share-out:** be ready to show what you built, what surprised you, and your honest read on where this fits versus Tableau.
 
