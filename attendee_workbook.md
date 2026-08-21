@@ -385,16 +385,9 @@ Now the fun part. You'll publish the dashboard you just built, create a **Genie 
 
 - In **Genie Code** (the agent's **Instructions** area), paste the block below (your instructor also shares it). Save.
 
-Instructions block to paste (scope + conventions only — we'll add the metrics as SQL next):
+Instructions block to paste (scope + conventions only — no join prose: relationships and the example query carry the joins):
 ```
 This Genie Agent answers questions about synthetic hospital encounters. There is no PHI.
-
-Data model:
-- fact_encounters is the central fact table, one row per patient encounter.
-- Join to dim_provider on provider_id, dim_facility on facility_id,
-  dim_diagnosis on primary_icd10_code = icd10_code, and dim_procedure on
-  primary_procedure_code = procedure_code. (Foreign keys are defined on the shared tables;
-  your own dim_facility joins to fact_encounters on facility_id.)
 
 Conventions:
 - Express all rates as a percentage from 0 to 100, rounded to one decimal; currency as whole dollars.
@@ -403,6 +396,7 @@ Conventions:
 - Show plain-language names in results (provider_name, facility_name, region, clinical_category,
   procedure_description), not the id columns.
 ```
+> *Why no "data model / joins" here:* the shared tables' joins are already declared as foreign keys, and the example query (Step 4) shows the `dim_facility` join — so restating joins in prose is redundant. Text instructions are a last resort; relationships and examples are more reliable. The only non-declared join (shared `fact_encounters` → your own `dim_facility`) is covered by the example query + your PK from Part 0 Step 6; if a facility question ever misses, define it as an explicit **relationship** in Genie Code, not in text.
 
 **Step 4 · Add SQL-based context — this is what really tunes Genie.** Free text is the *last* resort; **SQL-based context is more reliable**. Add a few high-value pieces in Genie Code (the same levers Databricks Day goes deep on):
 

@@ -28,16 +28,12 @@ fields and can join the tables. Layer a little curated context on top — and pe
 in priority order:
 
 ### 1. General instructions (keep it short)
-Scope + conventions only — metrics move to SQL expressions, and the procedure name resolves from the
-data itself. Paste into **Instructions**:
+Scope + conventions only. **No join prose** — restating "join fact to dim_x on y" duplicates the
+declared foreign keys, the FK column comments, and the example query below; text instructions are a
+last resort. Metrics live in SQL expressions; the procedure name resolves from the data. Paste into
+**Instructions**:
 ```
 This Genie Agent answers questions about synthetic hospital encounters. There is no PHI.
-
-Data model:
-- fact_encounters is the central fact table, one row per patient encounter.
-- Join to dim_provider on provider_id, dim_facility on facility_id,
-  dim_diagnosis on primary_icd10_code = icd10_code, and dim_procedure on
-  primary_procedure_code = procedure_code.
 
 Conventions:
 - Express all rates as a percentage from 0 to 100, rounded to one decimal; currency as whole dollars.
@@ -46,6 +42,10 @@ Conventions:
 - Show plain-language names in results (provider_name, facility_name, region, clinical_category,
   procedure_description), not the id columns.
 ```
+*Joins:* the shared tables' joins are declared foreign keys (Genie reads them). The one non-declared
+join — shared `fact_encounters` → an attendee's own `dim_facility` (cross-schema) — is taught by the
+example query in §4 and backed by the PK they add in Part 0 Step 6; if it ever misses, define it as an
+explicit **relationship** (slide 8's "define join relationships explicitly"), not as text.
 
 ### 2. Column synonyms (map user words to the schema)
 Add as **synonyms** on the relevant column/table, so everyday language resolves:
