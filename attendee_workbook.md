@@ -362,9 +362,9 @@ Now the fun part. You'll publish the dashboard you just built, create a **Genie 
 **Step 2 · Create a Genie Agent — on the table *you* built.**
 
 - In the left sidebar, click **Genie Agents** → **New** (top-right). *(If your workspace still says "Genie" / "Genie spaces," it's the same thing.)*
-- Choose your **data sources**:
-  - from the shared schema `{{CATALOG}}.{{SCHEMA}}`: **`fact_encounters`**, **`dim_provider`**, **`dim_diagnosis`**, **`dim_procedure`**
-  - and — *instead of* the shared `dim_facility` — **your own `{{CATALOG}}.analyst101_<you>.dim_facility`**, the table you built in Part 0. It has the same 12 facilities (same `facility_id`s), so it joins straight to `fact_encounters`.
+- Add these **data sources** (click **+ Add data** / the table picker):
+  1. From the **shared** schema `{{CATALOG}}.{{SCHEMA}}`: **`fact_encounters`**, **`dim_provider`**, **`dim_diagnosis`**, **`dim_procedure`**.
+  2. **⭐ Your own table from Part 0:** **`{{CATALOG}}.analyst101_<you>.dim_facility`** — add *this* as the facility dimension, and **do not** add the shared `dim_facility`. It has the same 12 facilities (same `facility_id`s), so it joins to `fact_encounters` cleanly.
 - Click **Create**. **Genie Code** launches automatically — that's where you add instructions and trusted assets.
 
 > **This closes the loop:** the raw file you cleaned into a governed `dim_facility` back in Part 0 is now the facility dimension powering your Genie Agent. Ask a facility- or region-level question (below) and Genie answers straight off *your* table.
