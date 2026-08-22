@@ -401,12 +401,17 @@ your Databricks Day demo:
   `Facility` → `Region` → `Encounter Month`. Land the **query-time grouping** point — continuity is a
   *ratio* (non-additive), so the view keeps it correct at every grain where a copy-pasted calc field
   wouldn't. *(Slides 15–19.)*
-- **Part C — trusted assets + the benchmark:** the money demo, **verified**. On a bare agent, ask
+- **Part C — trusted assets + the benchmark:** the money demo, **verified**. On the NAIVE agent, ask
   *"overall PCP continuity rate?"* → **76.3%** (Genie applies `is_standard` from the comments) vs
   *"what share of visits are with the patient's PCP?"* → **65.5%** (drops the exclusion). Same
-  question, 11-point swing by phrasing — best-effort isn't wrong so much as *inconsistent*. Then
-  register the trusted function/metric view → **76.3% every time**, called by name, "Trusted" badge.
-  *(Slides 6, 12, 16, 20.)*
+  question, 11-point swing by phrasing — best-effort is *inconsistent*. On the GOVERNED agent (metric
+  view + function in scope) both phrasings anchor to **76.3%**. **Be accurate on the mechanism:** per
+  Databricks docs, Genie is **nondeterministic even with trusted assets** — it decides whether to call
+  the asset (Trusted badge when it does) or hand-write SQL from the governed definition as context. The
+  real determinism is the **metric view / function called directly** (SQL, dashboards) — one governed
+  definition, same number every time; in Genie they *anchor* answers rather than *guarantee* a call.
+  Don't promise "it always calls the function by name." *(Slides 6, 12, 16, 20 — note the deck's
+  "deterministic" framing is aspirational; the governed-definition-as-anchor is the honest version.)*
 - **Part D — author your own:** the "go do this on your data" path — a metric-view measure
   (AI-assisted or YAML) and a SQL function in their own schema.
 
