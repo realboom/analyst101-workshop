@@ -514,8 +514,10 @@ Same question, an **11-point swing** by wording. Genie isn't "dumb" here — it 
 
 **Now anchor it to a governed definition — in two parts, because both matter:**
 1. **Register the assets.** Genie Code → **trusted assets** → add the metric view `pcp_continuity_metrics` and the function `pcp_continuity_ratio`. *(This makes them available — but on its own, Genie often still hand-writes its own SQL.)*
-2. **Point Genie at them with an instruction** (this is the step people skip). In **Instructions**, add:
-   > *For PCP continuity, use the `pcp_continuity_metrics` metric view (query measures with `MEASURE()`, e.g. `MEASURE(\`PCP Continuity Ratio\`)`) or the `pcp_continuity_ratio()` function — don't hand-write the logic. Continuity counts standard visits only.*
+2. **Point Genie at them with an instruction** (this is the step people skip). In **Instructions**, add a *routing* instruction — not the calculation itself:
+   > *For PCP continuity, use the governed assets rather than hand-writing SQL: query the `pcp_continuity_metrics` metric view with `MEASURE()` (e.g. `MEASURE(\`PCP Continuity Ratio\`)`), or call `pcp_continuity_ratio()` / `pcp_continuity_by_provider()`. They already encode the definition.*
+
+   *Note what this instruction does **not** contain: the standard-visits/assigned-PCP rules. Those live in the metric view and function — restating them here would be redundant and would just hand Genie the recipe to hand-write the logic instead of calling the governed asset. Route to the asset; let the asset own the definition.*
 
 Now ask the continuity question, any phrasing, and **Show generated code**: Genie calls `MEASURE(\`PCP Continuity Ratio\`)` / the function **by name** and returns **76.3%** — even for wordings that gave the naive agent 65.5%. *(In our testing, registering the asset alone left Genie hand-writing SQL; adding the instruction flipped it to call the governed asset by name on every phrasing. The registration makes it available; the instruction makes it preferred.)*
 
