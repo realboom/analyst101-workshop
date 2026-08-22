@@ -412,11 +412,16 @@ your Databricks Day demo:
   definition, same number every time; in Genie they *anchor* answers rather than *guarantee* a call.
   Don't promise "it always calls the function by name." *(Slides 6, 12, 16, 20 — note the deck's
   "deterministic" framing is aspirational; the governed-definition-as-anchor is the honest version.)*
-  **Config that works (tested):** *register the assets AND add an instruction pointing to them*
-  ("for PCP continuity use `pcp_continuity_metrics` / `pcp_continuity_ratio()`"). Registering alone
-  left Genie hand-writing SQL; with the instruction it called `MEASURE()` by name on all three
-  phrasings → 76.3%. Registration makes the asset *available*; the instruction makes it *preferred*.
-  Reinforce further with a parameterized example query tied to a representative question.
+  **Config that works (tested) — the escalation ladder maps to deck slide 13:**
+  - *Metric view:* register it **and** add a routing instruction ("for PCP continuity use
+    `pcp_continuity_metrics`"). Registering alone left Genie hand-writing SQL; with the instruction it
+    called `MEASURE()` by name on all phrasings → 76.3%.
+  - *Function:* register + instruction was **not** enough — Genie kept preferring the metric view (even
+    hallucinating a nonexistent `Provider` dim rather than call the function). What worked: an
+    **example query** whose SQL calls the function. Tested — pairing *"which providers have the lowest
+    PCP continuity?"* to a `pcp_continuity_by_provider()` example query made Genie call the function.
+  - So the ladder is: **register → instruct → example query**, escalating until Genie uses the asset.
+    Functions generally need the example query; the metric view often just needs the instruction.
 - **Part D — author your own:** the "go do this on your data" path — a metric-view measure
   (AI-assisted or YAML) and a SQL function in their own schema.
 
