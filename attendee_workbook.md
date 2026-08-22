@@ -521,43 +521,80 @@ Now ask the continuity question, any phrasing, and **Show generated code**: Geni
 
 ## Part D - Author your own (do this on your own data)
 
-You've *used* the governed assets — here's how to *create* them, so you can do this on your own tables later.
+You've *used* the governed assets in Parts A–C. Now **build them yourself** in your own schema, so you have the pattern for your real data. You'll create the two you saw: the `pcp_continuity_metrics` metric view and the `pcp_continuity_by_provider` function. Build them in **`{{CATALOG}}.analyst101_<you>`** (your own schema); they read the shared base data, which you have SELECT on.
 
-**A metric view (AI-assisted or YAML).** In **Catalog Explorer → Create → Metric view**, pick a source table and use **AI-assisted authoring**, or write the YAML directly. A minimal measure on `fact_encounters`:
+**1 · The metric view — one governed definition.** A metric view's `source` is a single relation, so continuity sources the shared **`encounters_enriched`** convenience view (one row per encounter with `is_standard` and `is_pcp_match` already computed). Run this in a SQL editor:
 
-```yaml
+```sql
+CREATE OR REPLACE VIEW {{CATALOG}}.analyst101_<you>.pcp_continuity_metrics
+(`Facility`, `Facility Code`, `Region`, `Encounter Month`,
+ `Total Standard Visits`, `PCP Matched Visits`, `PCP Continuity Ratio`)
+COMMENT 'Governed PCP continuity metrics over STANDARD visits only. Define the ratio once.'
+WITH METRICS
+LANGUAGE YAML
+AS $$
 version: 0.1
-source: {{CATALOG}}.{{SCHEMA}}.fact_encounters
+source: {{CATALOG}}.{{SCHEMA}}.encounters_enriched
+filter: is_standard = true
 dimensions:
+  - name: Facility
+    expr: facility_name
+  - name: Facility Code
+    expr: facility_id
+  - name: Region
+    expr: region
   - name: Encounter Month
     expr: date_trunc('MONTH', admit_date)
 measures:
-  - name: Readmission Rate
-    expr: AVG(readmitted_30d) * 100
+  - name: Total Standard Visits
+    expr: COUNT(1)
+  - name: PCP Matched Visits
+    expr: COUNT_IF(is_pcp_match)
+  - name: PCP Continuity Ratio
+    expr: TRY_DIVIDE(COUNT_IF(is_pcp_match), COUNT(1))
+$$;
 ```
 
-Then query it like any metric view:
+Query it like the shared one — measures via `MEASURE()`, grouped by a dimension:
 
 ```sql
-SELECT `Encounter Month`, MEASURE(`Readmission Rate`)
-FROM <your_view>
-GROUP BY `Encounter Month`
+SELECT `Facility`, ROUND(MEASURE(`PCP Continuity Ratio`)*100,1) AS continuity_pct
+FROM {{CATALOG}}.analyst101_<you>.pcp_continuity_metrics
+GROUP BY `Facility` ORDER BY continuity_pct DESC;
 ```
 
-*(The full working DDL — the `CREATE VIEW ... WITH METRICS LANGUAGE YAML` wrapper — is in `advanced_module/continuity_assets.sql`.)*
+*(Prefer the UI? **Catalog Explorer → Create → Metric view** offers AI-assisted authoring over the same YAML.)*
 
-**A SQL function.** Package a rule so anyone (and Genie) can call it by name — build it in **your own** schema:
+**2 · The `pcp_continuity_by_provider` function — the provider grain the metric view can't do.** A table function, self-contained (it joins the base tables in its body), parameterized by a date window:
 
 ```sql
-CREATE OR REPLACE FUNCTION {{CATALOG}}.analyst101_<you>.readmission_rate(p_start STRING, p_end STRING)
-RETURNS DOUBLE
-COMMENT 'Readmission rate (%) over the date window.'
-RETURN (SELECT AVG(readmitted_30d)*100
-        FROM {{CATALOG}}.{{SCHEMA}}.fact_encounters
-        WHERE admit_date BETWEEN to_date(p_start) AND to_date(p_end));
+CREATE OR REPLACE FUNCTION {{CATALOG}}.analyst101_<you>.pcp_continuity_by_provider(
+  p_start STRING DEFAULT '2023-01-01',
+  p_end   STRING DEFAULT '2025-12-31')
+RETURNS TABLE (provider_name STRING, standard_visits BIGINT, matched_visits BIGINT, continuity_ratio DOUBLE)
+COMMENT 'PCP continuity ratio per attending provider over standard visits in the date window.'
+RETURN
+  SELECT pr.provider_name,
+         count(*) AS standard_visits,
+         count_if(e.provider_id = pt.assigned_pcp_id) AS matched_visits,
+         try_divide(count_if(e.provider_id = pt.assigned_pcp_id), count(*)) AS continuity_ratio
+  FROM {{CATALOG}}.{{SCHEMA}}.fact_encounters e
+  JOIN {{CATALOG}}.{{SCHEMA}}.dim_patient    pt ON e.patient_id    = pt.patient_id
+  JOIN {{CATALOG}}.{{SCHEMA}}.dim_visit_type vt ON e.visit_type_id = vt.visit_type_id
+  JOIN {{CATALOG}}.{{SCHEMA}}.dim_provider   pr ON e.provider_id   = pr.provider_id
+  WHERE vt.is_standard AND e.admit_date BETWEEN to_date(p_start) AND to_date(p_end)
+  GROUP BY pr.provider_name;
 ```
 
-Grant `EXECUTE` to your Genie users, add it as a trusted asset, and it's callable — by people and by Genie. That's the whole confidence stack, on your own data.
+Call it (parameters have defaults, so `()` works):
+
+```sql
+SELECT provider_name, standard_visits, ROUND(continuity_ratio*100,1) AS continuity_pct
+FROM {{CATALOG}}.analyst101_<you>.pcp_continuity_by_provider()
+WHERE standard_visits >= 200 ORDER BY continuity_ratio DESC;
+```
+
+Grant `EXECUTE` to your Genie users, register these as trusted assets, and add an example query so Genie calls the function (Part A's note) — and you've rebuilt the whole confidence stack on your own. *(The full reference DDL, including the `encounters_enriched` view, is in `advanced_module/continuity_assets.sql`.)*
 
 ---
 
