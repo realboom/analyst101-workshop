@@ -464,19 +464,24 @@ Everything runs on the **PCP continuity** use case, already built on the shared 
 A SQL function packages logic once, so anyone — including Genie — calls it **by name** instead of re-deriving joins. It's registered in Unity Catalog and governed (grant `EXECUTE`; callers can't see or change the logic inside — ideal for PHI-sensitive clinical rules). Run these in a SQL editor:
 
 ```sql
--- one governed number (defaults span all dates + all facilities)
+-- overall governed number (defaults span all dates + all facilities)
 SELECT {{CATALOG}}.{{SCHEMA}}.pcp_continuity_ratio() AS overall_continuity;
 
--- parameterized: a date window
-SELECT {{CATALOG}}.{{SCHEMA}}.pcp_continuity_ratio('2025-01-01','2025-12-31') AS continuity_2025;
+-- parameterized: a specific facility and date window (FAC001 = the first facility)
+SELECT {{CATALOG}}.{{SCHEMA}}.pcp_continuity_ratio('2025-01-01','2025-12-31','FAC001') AS facility_2025;
 
--- a table function: rank providers by continuity
+-- table function: continuity BY PROVIDER, min 200 standard visits
 SELECT provider_name, standard_visits, ROUND(continuity_ratio*100,1) AS continuity_pct
 FROM {{CATALOG}}.{{SCHEMA}}.pcp_continuity_by_provider()
+WHERE standard_visits >= 200
 ORDER BY continuity_ratio DESC;
 ```
 
-The parameters carry `DEFAULT`s and comments, so they're self-documenting. Same inputs → same result every time (**deterministic**) — unlike best-effort natural language, which can vary run to run.
+The parameters carry `DEFAULT`s and comments, so they're self-documenting. Same inputs → same result every time (**deterministic**).
+
+> **When do you reach for a function instead of the metric view?** When the question is **parameterized** (a specific facility + date window) or needs a **grain the metric view doesn't model**. The metric view (Part B) rolls up by facility / region / month — it has **no provider dimension** — so *continuity by provider* is a job only the function can do. That's the clean division of labor: metric view for governed rollups, functions for parameterized logic and other grains.
+>
+> **A note on Genie + functions:** called directly (here, or from a dashboard/app) a function is fully deterministic. *Inside* Genie, functions are available as trusted assets, but Genie tends to prefer the metric view for anything it can answer that way — so don't expect it to reliably call a function just because it's registered. To steer Genie to a function for a specific question, add that question as an **example query** (Genie Code → Configure → Examples). Direct SQL (above) is the reliable way to show the function working.
 
 ## Part B - Metric views: one metric, one number
 
