@@ -440,15 +440,6 @@ Conventions:
 
 ---
 
-## End of Day 1
-Jot down, for the wrap-up:
-
-- One thing that was faster or easier than Tableau.
-- One thing you'd miss from Tableau.
-- **Your Day-2 scenario:** a question you want answered, or a report/dashboard you'd like to recreate. If you have an existing Tableau dashboard in mind, bring it.
-
----
-
 # DAY 2 - Advanced features: governed metrics & trusted assets
 
 Day 1 took you from a raw file to dashboards and a Genie Agent — *fast* answers. Day 2 is the **accuracy layer**: making answers *trustworthy*. It's the same arc as the Databricks Day session — the **confidence stack**, highest-confidence first:
