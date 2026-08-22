@@ -131,7 +131,7 @@ message from **slide 8** — *"start with the data, not the prompt; the setup dr
 
 ## Common gotchas
 - **"I can't create a schema"** → the group is missing `CREATE SCHEMA` on `{{CATALOG}}`. Fix:
-  `GRANT CREATE SCHEMA ON CATALOG {{CATALOG}} TO \`analyst101_attendees\`;` then they re-run
+  ``GRANT CREATE SCHEMA ON CATALOG {{CATALOG}} TO `analyst101_attendees`;`` then they re-run
   `CREATE SCHEMA {{CATALOG}}.analyst101_<their-name>`.
 - **"I don't see Create Volume / can't create a table"** → they're pointed at a schema they don't own
   (e.g. the shared one). Confirm they're in **their own** `analyst101_<user>` schema.

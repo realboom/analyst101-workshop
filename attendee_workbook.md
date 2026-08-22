@@ -492,7 +492,7 @@ GROUP BY `Facility`
 ORDER BY continuity_pct DESC;
 ```
 
-Now change **one line** — `GROUP BY \`Region\`` or `GROUP BY \`Encounter Month\`` — and the *same* measure re-slices correctly, no re-deriving:
+Now change **one line** — ``GROUP BY `Region` `` or ``GROUP BY `Encounter Month` `` — and the *same* measure re-slices correctly, no re-deriving:
 
 ```sql
 SELECT `Region`, ROUND(MEASURE(`PCP Continuity Ratio`)*100,1) AS continuity_pct
@@ -515,11 +515,11 @@ Same question, an **11-point swing** by wording. Genie isn't "dumb" here — it 
 **Now anchor it to a governed definition — in two parts, because both matter:**
 1. **Register the assets.** Genie Code → **trusted assets** → add the metric view `pcp_continuity_metrics` and the function `pcp_continuity_ratio`. *(This makes them available — but on its own, Genie often still hand-writes its own SQL.)*
 2. **Point Genie at them with an instruction** (this is the step people skip). In **Instructions**, add a *routing* instruction — not the calculation itself:
-   > *For PCP continuity, use the governed assets rather than hand-writing SQL: query the `pcp_continuity_metrics` metric view with `MEASURE()` (e.g. `MEASURE(\`PCP Continuity Ratio\`)`), or call `pcp_continuity_ratio()` / `pcp_continuity_by_provider()`. They already encode the definition.*
+   > *For PCP continuity, use the governed assets rather than hand-writing SQL: query the `pcp_continuity_metrics` metric view with `MEASURE()` (e.g. ``MEASURE(`PCP Continuity Ratio`)``), or call `pcp_continuity_ratio()` / `pcp_continuity_by_provider()`. They already encode the definition.*
 
    *Note what this instruction does **not** contain: the standard-visits/assigned-PCP rules. Those live in the metric view and function — restating them here would be redundant and would just hand Genie the recipe to hand-write the logic instead of calling the governed asset. Route to the asset; let the asset own the definition.*
 
-Now ask the continuity question, any phrasing, and **Show generated code**: Genie calls `MEASURE(\`PCP Continuity Ratio\`)` / the function **by name** and returns **76.3%** — even for wordings that gave the naive agent 65.5%. *(In our testing, registering the asset alone left Genie hand-writing SQL; adding the instruction flipped it to call the governed asset by name on every phrasing. The registration makes it available; the instruction makes it preferred.)*
+Now ask the continuity question, any phrasing, and **Show generated code**: Genie calls ``MEASURE(`PCP Continuity Ratio`)`` / the function **by name** and returns **76.3%** — even for wordings that gave the naive agent 65.5%. *(In our testing, registering the asset alone left Genie hand-writing SQL; adding the instruction flipped it to call the governed asset by name on every phrasing. The registration makes it available; the instruction makes it preferred.)*
 
 > **The honest mechanism** (matches the docs): Genie is **nondeterministic** even with trusted assets — it *decides* whether to call the function/query or just learn the rule from it. So the badge isn't guaranteed on every ask. What *is* reliable is the **single governed definition**: the metric view and function define continuity **once**, in Unity Catalog. Call them directly (SQL, dashboards) and you get the **same number every time, by definition** — that's the real determinism. In Genie they act as an **anchor** so answers converge on the governed number instead of drifting by phrasing like the naive agent. To *maximize* Genie using the asset (and showing the badge), also add it as a **parameterized example query** tied to a representative question.
 
@@ -540,7 +540,15 @@ measures:
     expr: AVG(readmitted_30d) * 100
 ```
 
-Then query it like any metric view: `SELECT \`Encounter Month\`, MEASURE(\`Readmission Rate\`) FROM <your_view> GROUP BY \`Encounter Month\``. *(The full working DDL — the `CREATE VIEW ... WITH METRICS LANGUAGE YAML` wrapper — is in `advanced_module/continuity_assets.sql`.)*
+Then query it like any metric view:
+
+```sql
+SELECT `Encounter Month`, MEASURE(`Readmission Rate`)
+FROM <your_view>
+GROUP BY `Encounter Month`
+```
+
+*(The full working DDL — the `CREATE VIEW ... WITH METRICS LANGUAGE YAML` wrapper — is in `advanced_module/continuity_assets.sql`.)*
 
 **A SQL function.** Package a rule so anyone (and Genie) can call it by name — build it in **your own** schema:
 
