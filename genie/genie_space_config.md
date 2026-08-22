@@ -27,6 +27,17 @@ fields and can join the tables. Layer a little curated context on top — and pe
 (the Databricks Day slide 8–9 story), **SQL-based context beats free-text instructions.** Add these,
 in priority order:
 
+> **Register only the trusted assets you'll actually point Genie at** — via a routing instruction or an
+> example query. Registering a function/metric view Genie is never steered to just adds noise; it sits
+> there unused (Genie won't call it on its own — see the escalation ladder below). Tested here: of the
+> three continuity functions, only `pcp_continuity_by_provider()` earns its place in the agent (it has
+> an example query and does the provider grain the metric view can't); the other two are covered by the
+> metric view and are best shown via **direct SQL**, not registered as agent assets.
+>
+> **Escalation ladder to get an asset actually used:** *register → add a routing instruction → add an
+> example query.* The metric view often just needs the instruction; a **function generally needs an
+> example query** whose SQL calls it.
+
 ### 1. General instructions (keep it short)
 Scope + conventions only. **No join prose** — restating "join fact to dim_x on y" duplicates the
 declared foreign keys, the FK column comments, and the example query below; text instructions are a

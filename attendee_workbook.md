@@ -518,7 +518,7 @@ Now wire the governed definitions into Genie so plain-language questions resolve
 Same question, an **11-point swing** by wording. Genie isn't "dumb" here — it read the column comments and got the first one right — it's just *not guaranteed*. That's the trust problem: two analysts phrase it differently and report two different numbers.
 
 **Now anchor it to a governed definition — in two parts, because both matter:**
-1. **Register the assets.** Genie Code → **trusted assets** → add the metric view `pcp_continuity_metrics` and the function `pcp_continuity_ratio`. *(This makes them available — but on its own, Genie often still hand-writes its own SQL.)*
+1. **Register the assets.** Genie Code → **trusted assets** → add the metric view `pcp_continuity_metrics` and the function `pcp_continuity_ratio`. *(This makes them available — but on its own, Genie often still hand-writes its own SQL.)* **Only register what you'll actually point Genie at** (via the instruction or an example query below) — an asset nothing steers Genie to just adds noise. Assets you only call in SQL (like `standard_visit_count()`) don't need to be registered on the agent at all.
 2. **Point Genie at them with an instruction** (this is the step people skip). In **Instructions**, add a *routing* instruction — not the calculation itself:
    > *For PCP continuity, use the governed assets rather than hand-writing SQL: query the `pcp_continuity_metrics` metric view with `MEASURE()` (e.g. ``MEASURE(`PCP Continuity Ratio`)``), or call `pcp_continuity_ratio()` / `pcp_continuity_by_provider()`. They already encode the definition.*
 
