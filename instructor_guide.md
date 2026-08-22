@@ -412,6 +412,11 @@ your Databricks Day demo:
   definition, same number every time; in Genie they *anchor* answers rather than *guarantee* a call.
   Don't promise "it always calls the function by name." *(Slides 6, 12, 16, 20 — note the deck's
   "deterministic" framing is aspirational; the governed-definition-as-anchor is the honest version.)*
+  **Config that works (tested):** *register the assets AND add an instruction pointing to them*
+  ("for PCP continuity use `pcp_continuity_metrics` / `pcp_continuity_ratio()`"). Registering alone
+  left Genie hand-writing SQL; with the instruction it called `MEASURE()` by name on all three
+  phrasings → 76.3%. Registration makes the asset *available*; the instruction makes it *preferred*.
+  Reinforce further with a parameterized example query tied to a representative question.
 - **Part D — author your own:** the "go do this on your data" path — a metric-view measure
   (AI-assisted or YAML) and a SQL function in their own schema.
 
