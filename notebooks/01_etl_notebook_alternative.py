@@ -1,4 +1,8 @@
 # Databricks notebook source
+# /// script
+# [tool.databricks.environment]
+# environment_version = "5"
+# ///
 # MAGIC %md
 # MAGIC # Analyst 101 — ETL the code way (notebook alternative to Visual Data Prep)
 # MAGIC
@@ -38,43 +42,44 @@ print("Will write table :", target)
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 4
 # MAGIC %md
-# MAGIC ## Cell 1 of 3 · Read and explore the CSV
-# MAGIC Read the raw file into a Spark DataFrame and eyeball the mess — padded text, `State` spelled every
-# MAGIC which way, inconsistent `Type` case, blank `Region`s, and a duplicate row. This is the **bronze**
-# MAGIC (raw, as-ingested) layer.
+# MAGIC ## Cell 1 of 3 · Explore the raw CSV with `read_files()`
+# MAGIC Use the `read_files()` SQL function to scan the raw file directly — no Python needed. Eyeball the
+# MAGIC mess: padded text, `State` spelled every which way, inconsistent `Type` case, blank `Region`s, and a
+# MAGIC duplicate row. This is the **bronze** (raw, as-ingested) layer.
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 5
+# MAGIC %sql
+# MAGIC -- Explore the raw CSV directly — scan for padded text, inconsistent State/Type, blank Regions, dupes
+# MAGIC SELECT *
+# MAGIC FROM read_files(
+# MAGIC   '/Volumes/${catalog}/${schema}/landing/facilities_raw.${profile}.csv',
+# MAGIC   format => 'csv',
+# MAGIC   header => 'true'
+# MAGIC )
+
+# COMMAND ----------
+
+# DBTITLE 1,Cell 6
+# MAGIC %md
+# MAGIC ## Cell 2 of 3 · Create the temp view for downstream ETL
+# MAGIC Read the same file into a Spark DataFrame and register it as `facilities_raw` — the SQL-based
+# MAGIC cleaning step below queries this view.
+
+# COMMAND ----------
+
+# DBTITLE 1,Create temp view for ETL
 raw = (spark.read
        .option("header", True)
        .option("inferSchema", True)
        .csv(csv_path))
 
-# register a temp view so the %sql cell below can query the same file
+# Register a temp view so the cleaning SQL below can query it
 raw.createOrReplaceTempView("facilities_raw")
-
-print(f"Raw row count: {raw.count()}")   # ~13 — includes one duplicate row
-raw.printSchema()
-display(raw)                             # scan it: leading/trailing spaces, 'CO' vs 'CO ' vs 'wa' vs 'Colorado', blank Regions, a dupe
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC ## Cell 2 of 3 · Query the file with SQL (`%sql`)
-# MAGIC The same file, now in plain SQL. An analyst's first move is to **quantify the mess** before cleaning
-# MAGIC — one query surfaces the duplicate, the blank regions, and how many ways `State` is spelled.
-
-# COMMAND ----------
-
-# MAGIC %sql
-# MAGIC SELECT
-# MAGIC   count(*)                                          AS raw_rows,
-# MAGIC   count(DISTINCT `Facility ID`)                     AS distinct_facility_ids,
-# MAGIC   count(*) - count(DISTINCT `Facility ID`)          AS duplicate_rows,       -- > 0 => a dupe to collapse
-# MAGIC   count_if(Region IS NULL OR trim(Region) = '')     AS blank_regions,        -- need filling
-# MAGIC   count(DISTINCT State)                             AS state_spelling_variants  -- 'CO','CO ','wa','WA','Colorado'...
-# MAGIC FROM facilities_raw;
+print(f"✅ Temp view 'facilities_raw' created — {raw.count()} rows ready for ETL")
 
 # COMMAND ----------
 
