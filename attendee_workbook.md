@@ -521,6 +521,13 @@ Now ask the continuity question, any phrasing, and **Show generated code**: Geni
 
 > **The honest mechanism** (matches the docs): Genie is **nondeterministic** even with trusted assets — it *decides* whether to call the function/query or just learn the rule from it. So the badge isn't guaranteed on every ask. What *is* reliable is the **single governed definition**: the metric view and function define continuity **once**, in Unity Catalog. Call them directly (SQL, dashboards) and you get the **same number every time, by definition** — that's the real determinism. In Genie they act as an **anchor** so answers converge on the governed number instead of drifting by phrasing like the naive agent. To *maximize* Genie using the asset (and showing the badge), also add it as a **parameterized example query** tied to a representative question.
 
+**Make it repeatable — the Monitoring and Benchmarks tabs.** The two-phrasing test above is the idea done *by hand*; the agent has two tabs (top of **Genie Code**) that do it for real:
+
+- **Benchmarks** — add a set of representative questions, each paired with the **expected answer** (or the known-correct SQL), then **Run**. Genie scores how many it gets right, so you can *quantify* accuracy instead of eyeballing one answer. Baseline the bare agent, register the metric view / function / SQL expressions, then **re-run to prove the lift** — the continuity question is the canonical row (phrasing-sensitive **65.5%** → governed **76.3%**). This is the productized version of the before/after you just did.
+- **Monitoring** — the **real questions** analysts asked this agent, the SQL Genie generated, and their 👍 / 👎 / *Fix it* feedback. It's your curation backlog: the questions that missed are exactly the ones to promote into a **synonym**, **SQL expression**, **example query**, or **trusted asset**. Curate from real usage, don't guess.
+
+> **The loop:** **Monitoring** tells you *what to fix* → a trusted asset / expression *fixes it* → the **Benchmark** *proves it stayed fixed*. That's how a Genie Agent matures from "demo" to "trusted."
+
 ## Part D - Author your own (do this on your own data)
 
 You've *used* the governed assets in Parts A–C. Now **build them yourself** in your own schema, so you have the pattern for your real data. You'll create the two you saw: the `pcp_continuity_metrics` metric view and the `pcp_continuity_by_provider` function. Build them in **`{{CATALOG}}.analyst101_<you>`** (your own schema); they read the shared base data, which you have SELECT on.

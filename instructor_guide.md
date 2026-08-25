@@ -422,6 +422,11 @@ your Databricks Day demo:
     PCP continuity?"* to a `pcp_continuity_by_provider()` example query made Genie call the function.
   - So the ladder is: **register → instruct → example query**, escalating until Genie uses the asset.
     Functions generally need the example query; the metric view often just needs the instruction.
+  - **Monitoring + Benchmarks tabs (2 min, show live):** open the agent's **Benchmarks** tab and run
+    the continuity question as a benchmark row to *quantify* the lift (naive **65.5%** → governed
+    **76.3%**), not just eyeball one answer; open **Monitoring** to show the real question log + 👍/👎 /
+    *Fix it* feedback that becomes the curation backlog. Framing: **Monitoring = what to fix, trusted
+    assets = the fix, Benchmarks = proof it holds.**
 - **Part D — author your own:** the "go do this on your data" path — a metric-view measure
   (AI-assisted or YAML) and a SQL function in their own schema.
 
@@ -432,8 +437,9 @@ Tableau-heavy attendees — anchor the metric view to "published data source, bu
 > **Benchmark is verified** (tested via the Genie API): governed number = **76.3%**; a bare agent
 > gives 76.3% for "continuity rate" but **65.5%** for "share of visits with the patient's PCP" (drops
 > the `is_standard` exclusion) — the phrasing-variance contrast is real. **Still verify the inferred
-> UI labels live:** the **trusted assets** location in Genie Code, the **"Trusted" badge**, and
-> **Catalog Explorer → Create → Metric view** AI-assisted authoring — fix any that drift.
+> UI labels live:** the **trusted assets** location in Genie Code, the **"Trusted" badge**,
+> **Catalog Explorer → Create → Metric view** AI-assisted authoring, and the **Monitoring** /
+> **Benchmarks** tab labels + flow — fix any that drift.
 
 ### Break (12:55-1:05)
 

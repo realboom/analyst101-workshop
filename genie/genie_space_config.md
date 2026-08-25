@@ -112,6 +112,19 @@ On the documented dataset, Genie correctly auto-joined `fact_encounters` to `dim
 foreign key and answered "which facility has the highest 30-day readmission rate (min 500 encounters)"
 without any join hints. The profile's headline surgery (`{{PROCEDURE_EXAMPLE}}`) returns a sensible length of stay (e.g. tonsillectomy ≈ 2.4 days on the pediatric profile).
 
+## Monitoring & Benchmarks — measure, then improve
+Two tabs on the agent (top of **Genie Code**) turn "seems better" into "measurably better":
+- **Benchmarks** — define *question → expected-answer/SQL* pairs and **Run** them for an accuracy
+  score. Use it to (a) baseline the bare agent, (b) re-run after registering the metric view /
+  function / SQL expressions, and (c) show the lift. The PCP-continuity question is the canonical
+  benchmark row (governed → **76.3%**; phrasing-sensitive naive → **65.5%**).
+- **Monitoring** — the real questions analysts asked, the generated SQL, and 👍 / 👎 / *Fix it*
+  feedback. It's the curation backlog: promote missed questions into **synonyms**, **SQL expressions**,
+  **example queries**, or **trusted assets**.
+
+> **Loop:** Monitoring surfaces the gaps → add governed context (SQL expression / example / trusted
+> asset) → Benchmark confirms the fix holds. This is the "maturing Genie" thesis, made quantitative.
+
 ## Facilitator tips
 - Let a more **skeptical attendee** drive, and always click **Show generated code** so they see the
   Databricks SQL behind each answer — great for anyone who wants SQL-dialect help.
