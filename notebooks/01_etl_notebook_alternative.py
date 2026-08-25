@@ -56,7 +56,7 @@ print("Will write table :", target)
 # MAGIC -- Explore the raw CSV directly — scan for padded text, inconsistent State/Type, blank Regions, dupes
 # MAGIC SELECT *
 # MAGIC FROM read_files(
-# MAGIC   '/Volumes/${catalog}/${schema}/landing/facilities_raw.${profile}.csv',
+# MAGIC   '/Volumes/' || :catalog || '/' || :schema || '/landing/facilities_raw.' || :profile || '.csv',
 # MAGIC   format => 'csv',
 # MAGIC   header => 'true'
 # MAGIC )
