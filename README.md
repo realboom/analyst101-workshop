@@ -8,7 +8,9 @@ Two halves, one dataset:
 
 1. **Foundations + ETL** — attendees create a Unity Catalog **volume**, upload a messy CSV, and
    use the no-code **Lakeflow Designer** visual ETL builder to build a **bronze → silver → gold**
-   medallion pipeline that produces a governed `dim_facility` table.
+   medallion pipeline that produces a governed `dim_facility` table. *(A code-first alternative —
+   [`notebooks/01_etl_notebook_alternative.py`](notebooks/01_etl_notebook_alternative.py) — reaches the
+   same `dim_facility` in three cells, for when the session is short on time or an analyst prefers SQL.)*
 2. **AI/BI** — attendees build an **AI/BI dashboard** and stand up a **Genie Agent** on the
    pre-built star schema, so they see governed tables turn into interactive analytics and
    plain-language Q&A.
@@ -71,7 +73,8 @@ analyst101-workshop/
 ├── instructor_guide.md           · facilitator manual — whole workshop (ETL playbook + AI/BI segments)
 ├── workshop_assets.md            · live links/IDs + provisioning checklist
 ├── notebooks/
-│   └── 00_setup_workshop.py      · one-time notebook build (data, dashboard, Genie, grants, verify)
+│   ├── 00_setup_workshop.py      · one-time notebook build (data, dashboard, Genie, grants, verify)
+│   └── 01_etl_notebook_alternative.py · code (notebook) alternative to the visual ETL lab — 3 cells → dim_facility
 ├── profiles/                     · population "flavor packs" — single source of truth per dataset
 │   ├── common.py                 · shared name pools, visit types, US-state map, messiness recipe
 │   ├── adult.py                  · adult / acute-care seed data
