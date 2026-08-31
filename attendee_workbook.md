@@ -421,7 +421,7 @@ Conventions:
   FROM fact_encounters e JOIN dim_facility f USING (facility_id)
   GROUP BY f.facility_name HAVING COUNT(*) >= 200 ORDER BY readmit_rate_pct DESC
   ```
-  *Note the example spells out `AVG(readmitted_30d)*100` rather than referencing the `readmission_rate` expression above. An example query must be complete, runnable SQL — a SQL expression is context Genie reads, not a column/function you can name in a query. Keep the two in sync (same math). This is the opposite of metric views / SQL functions on Day 2, which **are** real objects you call by name — `MEASURE(...)` / `pcp_continuity_ratio()`.*
+  *Note the example spells out `AVG(readmitted_30d)*100` rather than referencing the `readmission_rate` expression above. An example query must be complete, runnable SQL — a SQL expression is context Genie reads, not a column/function you can name in a query. Keep the two in sync (same math). This is the opposite of metric views / SQL functions on Day 2, which **are** real objects you call by name — `MEASURE(...)` / `pcp_continuity_by_provider()`.*
 
 > **Priority order (what Genie reads, best first):** column comments/keys → **synonyms** → **SQL expressions** (metrics/filters) → **example queries** → free-text instructions *last*. The full set is in `genie/genie_space_config.md`.
 
@@ -454,25 +454,22 @@ Everything runs on the **PCP continuity** use case, already built on the shared 
 
 ## Part 5 - SQL functions: deterministic, callable logic
 
-A SQL function packages logic once, so anyone — including Genie — calls it **by name** instead of re-deriving joins. It's registered in Unity Catalog and governed (grant `EXECUTE`; callers can't see or change the logic inside — ideal for PHI-sensitive clinical rules). Run these in a SQL editor:
+> **Parts 5 and 6 are exploratory.** The function and metric view already exist in the shared schema — here you just *run queries against them* to see how governed assets behave. You'll build your own versions in **Part 8**.
+
+A SQL function packages logic once, so anyone — including Genie — calls it **by name** instead of re-deriving joins. It's registered in Unity Catalog and governed (grant `EXECUTE`; callers can't see or change the logic inside — ideal for PHI-sensitive clinical rules). We use **one** function here — `pcp_continuity_by_provider()` — because it does the **provider grain the metric view can't** (the overall/facility/region ratio is covered by the metric view in Part 6). Run it in a SQL editor:
 
 ```sql
--- overall governed number (defaults span all dates + all facilities)
-SELECT {{CATALOG}}.{{SCHEMA}}.pcp_continuity_ratio() AS overall_continuity;
-
--- parameterized: a specific facility and date window (FAC001 = the first facility)
-SELECT {{CATALOG}}.{{SCHEMA}}.pcp_continuity_ratio('2025-01-01','2025-12-31','FAC001') AS facility_2025;
-
 -- table function: continuity BY PROVIDER, min 200 standard visits
+-- (the provider grain the metric view can't produce)
 SELECT provider_name, standard_visits, ROUND(continuity_ratio*100,1) AS continuity_pct
 FROM {{CATALOG}}.{{SCHEMA}}.pcp_continuity_by_provider()
 WHERE standard_visits >= 200
 ORDER BY continuity_ratio DESC;
 ```
 
-The parameters carry `DEFAULT`s and comments, so they're self-documenting. Same inputs → same result every time (**deterministic**).
+It's a **table function** — you query it like a table, but the provider-grain logic lives in one governed place, not re-derived per query. Same inputs → same result every time (**deterministic**).
 
-> **When do you reach for a function instead of the metric view?** When the question is **parameterized** (a specific facility + date window) or needs a **grain the metric view doesn't model**. The metric view (Part 6) rolls up by facility / region / month — it has **no provider dimension** — so *continuity by provider* is a job only the function can do. That's the clean division of labor: metric view for governed rollups, functions for parameterized logic and other grains.
+> **When do you reach for a function instead of the metric view?** When the question needs a **grain the metric view doesn't model**. The metric view (Part 6) rolls up by facility / region / month — it has **no provider dimension** — so *continuity by provider* is a job only the function can do. That's the clean division of labor: metric view for governed rollups, functions for the grains (and parameterized logic) it can't express.
 >
 > **A note on Genie + functions:** called directly (here, or from a dashboard/app) a function is fully deterministic. *Inside* Genie, functions are available as trusted assets, but Genie tends to prefer the metric view for anything it can answer that way — registering a function (or a text instruction to use it) is **not** enough to make Genie call it. What works: add the question as an **example query** whose SQL calls the function (Genie Code → Configure → Examples). Tested: with an example query pairing *"which providers have the lowest PCP continuity?"* to a `pcp_continuity_by_provider()` query, Genie called the function; without it, Genie forced the question through the metric view (which has no provider dimension) and returned nothing.
 
@@ -511,9 +508,9 @@ Now wire the governed definitions into Genie so plain-language questions resolve
 Same question, an **11-point swing** by wording. Genie isn't "dumb" here — it read the column comments and got the first one right — it's just *not guaranteed*. That's the trust problem: two analysts phrase it differently and report two different numbers.
 
 **Now anchor it to a governed definition — in two parts, because both matter:**
-1. **Register the assets.** Genie Code → **trusted assets** → add the metric view `pcp_continuity_metrics` and the function `pcp_continuity_ratio`. *(This makes them available — but on its own, Genie often still hand-writes its own SQL.)* **Only register what you'll actually point Genie at** (via the instruction or an example query below) — an asset nothing steers Genie to just adds noise. Assets you only call in SQL (like `standard_visit_count()`) don't need to be registered on the agent at all.
+1. **Register the assets.** Genie Code → **trusted assets** → add the metric view `pcp_continuity_metrics` (and, for provider-level questions, the function `pcp_continuity_by_provider`). *(This makes them available — but on its own, Genie often still hand-writes its own SQL.)* **Only register what you'll actually point Genie at** (via the instruction or an example query below) — an asset nothing steers Genie to just adds noise. Assets you only call in SQL (like `standard_visit_count()`) don't need to be registered on the agent at all.
 2. **Point Genie at them with an instruction** (this is the step people skip). In **Instructions**, add a *routing* instruction — not the calculation itself:
-   > *For PCP continuity, use the governed assets rather than hand-writing SQL: query the `pcp_continuity_metrics` metric view with `MEASURE()` (e.g. ``MEASURE(`PCP Continuity Ratio`)``), or call `pcp_continuity_ratio()` / `pcp_continuity_by_provider()`. They already encode the definition.*
+   > *For PCP continuity, use the governed assets rather than hand-writing SQL: query the `pcp_continuity_metrics` metric view with `MEASURE()` (e.g. ``MEASURE(`PCP Continuity Ratio`)``), or call `pcp_continuity_by_provider()` for provider-level questions. They already encode the definition.*
 
    *Note what this instruction does **not** contain: the standard-visits/assigned-PCP rules. Those live in the metric view and function — restating them here would be redundant and would just hand Genie the recipe to hand-write the logic instead of calling the governed asset. Route to the asset; let the asset own the definition.*
 
@@ -627,7 +624,7 @@ Pick a scenario (yours, or one below) and build it. Instructors will float to he
 - A filter and cross-filtering between two widgets.
 - A drill-down hierarchy.
 - A question in Genie, with the SQL revealed.
-- **(Advanced)** a governed metric — query `pcp_continuity_metrics` with `MEASURE()`, or call `pcp_continuity_ratio()`, from Parts 5–6.
+- **(Advanced)** a governed metric — query `pcp_continuity_metrics` with `MEASURE()`, or call `pcp_continuity_by_provider()`, from Parts 5–6.
 
 **Share-out:** be ready to show what you built, what surprised you, and your honest read on where this fits versus Tableau.
 

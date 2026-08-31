@@ -395,8 +395,10 @@ assets are pre-deployed on the shared schema (`pcp_continuity_metrics` + the 3 f
 ## Segment 1 - Advanced features: governed metrics & trusted assets (12:10-12:55)
 Walk the **Workbook Day-2 Parts 5–8** on the PCP-continuity use case. This is the hands-on version of
 your Databricks Day demo:
-- **Part 5 — SQL functions:** call `pcp_continuity_ratio()` / `pcp_continuity_by_provider()` by name;
-  deterministic, parameterized, `EXECUTE`-granted, logic hidden (PHI-safe). *(Deck slides 12–14.)*
+- **Part 5 — SQL functions:** call `pcp_continuity_by_provider()` by name — the provider grain the
+  metric view can't produce; deterministic, `EXECUTE`-granted, logic hidden (PHI-safe). *(We feature
+  just this one function now — the overall/facility/region ratio is covered by the metric view in
+  Part 6.)* *(Deck slides 12–14.)*
 - **Part 6 — metric views:** query `pcp_continuity_metrics` with `MEASURE()`; re-slice by
   `Facility` → `Region` → `Encounter Month`. Land the **query-time grouping** point — continuity is a
   *ratio* (non-additive), so the view keeps it correct at every grain where a copy-pasted calc field
