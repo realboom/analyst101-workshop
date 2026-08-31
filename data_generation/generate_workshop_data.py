@@ -392,7 +392,7 @@ TABLE_COMMENTS = {
     "dim_diagnosis": "ICD-10 diagnosis codes with plain-language descriptions and clinical category. One row per code.",
     "dim_procedure": "Procedure codes (CPT-style) with descriptions and category. One row per code.",
     "dim_patient": "Patients with their assigned primary care provider (PCP) and home facility. One row per patient. PCP continuity compares each visit's attending provider to the patient's assigned PCP.",
-    "dim_visit_type": "Visit type reference. Non-standard visit types (telehealth admin, nurse-only, immunization-only) are EXCLUDED from the PCP continuity calculation.",
+    "dim_visit_type": "Visit type reference (office, telehealth admin, nurse-only, immunization-only). One row per visit type.",
 }
 
 COLUMN_COMMENTS = {
@@ -453,7 +453,7 @@ COLUMN_COMMENTS = {
     "dim_visit_type": {
         "visit_type_id": "Primary key. Visit type code.",
         "visit_type_name": "Human-readable visit type.",
-        "is_standard": "TRUE for standard visits counted in PCP continuity; FALSE for non-standard types that are EXCLUDED.",
+        "is_standard": "TRUE for a standard visit type, FALSE for a non-standard one.",
     },
 }
 
