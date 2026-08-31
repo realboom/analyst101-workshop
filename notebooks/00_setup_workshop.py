@@ -211,7 +211,8 @@ Metric definitions (express all rates as a percentage from 0 to 100):
 - Average length of stay = AVG(length_of_stay_days), in days
 
 PCP continuity of care:
-- A "standard visit" is an encounter whose visit type has is_standard = true.
+- A "standard visit" is an encounter whose visit_type_id is 'OFFICE' (the rule lives in the governed
+  assets, not as a flag on dim_visit_type).
 - PCP continuity = the share of a patient's standard visits handled by that patient's assigned PCP
   (dim_patient.assigned_pcp_id), expressed as a percentage.
 - Prefer the pcp_continuity_metrics metric view for continuity rollups (use MEASURE() on its measures).

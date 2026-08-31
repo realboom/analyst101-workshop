@@ -586,9 +586,8 @@ RETURN
          try_divide(count_if(e.provider_id = pt.assigned_pcp_id), count(*)) AS continuity_ratio
   FROM {{CATALOG}}.{{SCHEMA}}.fact_encounters e
   JOIN {{CATALOG}}.{{SCHEMA}}.dim_patient    pt ON e.patient_id    = pt.patient_id
-  JOIN {{CATALOG}}.{{SCHEMA}}.dim_visit_type vt ON e.visit_type_id = vt.visit_type_id
   JOIN {{CATALOG}}.{{SCHEMA}}.dim_provider   pr ON e.provider_id   = pr.provider_id
-  WHERE vt.is_standard AND e.admit_date BETWEEN to_date(p_start) AND to_date(p_end)
+  WHERE e.visit_type_id = 'OFFICE' AND e.admit_date BETWEEN to_date(p_start) AND to_date(p_end)
   GROUP BY pr.provider_name;
 ```
 

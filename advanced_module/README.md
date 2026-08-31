@@ -26,8 +26,9 @@ capabilities on one metric:
 
 The PCP-continuity enrichment must exist in the shared schema — it's produced by
 `data_generation/generate_workshop_data.py` (adds `dim_patient.assigned_pcp_id`,
-`dim_visit_type.is_standard`, `dim_provider.is_pcp`, and biases attending-provider assignment so
-the ratio is realistic and varies by facility, ~55–90%).
+`dim_provider.is_pcp`, and biases attending-provider assignment so the ratio is realistic and varies
+by facility, ~55–90%). Standard visits are `visit_type_id = 'OFFICE'` — the rule lives in the governed
+assets (`encounters_enriched` / metric view / functions), not as a flag on `dim_visit_type`.
 
 ## Deploy
 

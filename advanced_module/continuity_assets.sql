@@ -4,10 +4,12 @@
 -- These are the "go deeper" assets for a Databricks Day / advanced session, built on the SAME
 -- shared encounters dataset the Analyst 101 workshop uses ({{CATALOG}}.{{SCHEMA}}). They rely on
 -- the PCP-continuity enrichment produced by data_generation/generate_workshop_data.py
--- (dim_patient.assigned_pcp_id, dim_visit_type.is_standard, dim_provider.is_pcp).
+-- (dim_patient.assigned_pcp_id, dim_provider.is_pcp; standard visits = visit_type_id 'OFFICE').
 --
 -- PCP continuity = share of STANDARD visits where the attending provider (fact_encounters.provider_id)
--- is the patient's assigned PCP (dim_patient.assigned_pcp_id). Non-standard visit types are excluded.
+-- is the patient's assigned PCP (dim_patient.assigned_pcp_id). A STANDARD visit is visit_type_id
+-- 'OFFICE'; non-standard types (telehealth admin, nurse-only, immunization-only) are excluded. The
+-- rule lives here in the governed assets, NOT as a flag on the dimension table.
 --
 -- Run top to bottom on a serverless SQL warehouse after the generator has populated the schema.
 -- Demonstrates: Metric Views, SQL functions (scalar + table), and trusted assets for Genie.
@@ -25,7 +27,7 @@ SELECT
   f.region,
   e.visit_type_id,
   vt.visit_type_name,
-  vt.is_standard,
+  (e.visit_type_id = 'OFFICE')        AS is_standard,
   e.patient_id,
   p.home_facility_id,
   p.assigned_pcp_id,
@@ -67,6 +69,7 @@ measures:
 $$;
 
 -- 3) SQL functions (trusted assets Genie can call) -------------------------------------------
+-- A STANDARD visit is visit_type_id 'OFFICE'; the rule is encoded here, not on the dimension.
 
 -- Governed continuity ratio for a date window and optional facility.
 CREATE OR REPLACE FUNCTION {{CATALOG}}.{{SCHEMA}}.pcp_continuity_ratio(
@@ -79,8 +82,7 @@ RETURN (
   SELECT try_divide(count_if(e.provider_id = pt.assigned_pcp_id), count(*))
   FROM {{CATALOG}}.{{SCHEMA}}.fact_encounters e
   JOIN {{CATALOG}}.{{SCHEMA}}.dim_patient    pt ON e.patient_id    = pt.patient_id
-  JOIN {{CATALOG}}.{{SCHEMA}}.dim_visit_type vt ON e.visit_type_id = vt.visit_type_id
-  WHERE vt.is_standard
+  WHERE e.visit_type_id = 'OFFICE'
     AND e.admit_date BETWEEN to_date(p_start) AND to_date(p_end)
     AND (p_facility IS NULL OR e.facility_id = p_facility)
 );
@@ -95,8 +97,7 @@ COMMENT 'Count of STANDARD visits in the window (non-standard visit types exclud
 RETURN (
   SELECT count(*)
   FROM {{CATALOG}}.{{SCHEMA}}.fact_encounters e
-  JOIN {{CATALOG}}.{{SCHEMA}}.dim_visit_type vt ON e.visit_type_id = vt.visit_type_id
-  WHERE vt.is_standard
+  WHERE e.visit_type_id = 'OFFICE'
     AND e.admit_date BETWEEN to_date(p_start) AND to_date(p_end)
     AND (p_facility IS NULL OR e.facility_id = p_facility)
 );
@@ -115,9 +116,8 @@ RETURN
          try_divide(count_if(e.provider_id = pt.assigned_pcp_id), count(*)) AS continuity_ratio
   FROM {{CATALOG}}.{{SCHEMA}}.fact_encounters e
   JOIN {{CATALOG}}.{{SCHEMA}}.dim_patient    pt ON e.patient_id    = pt.patient_id
-  JOIN {{CATALOG}}.{{SCHEMA}}.dim_visit_type vt ON e.visit_type_id = vt.visit_type_id
   JOIN {{CATALOG}}.{{SCHEMA}}.dim_provider   pr ON e.provider_id   = pr.provider_id
-  WHERE vt.is_standard AND e.admit_date BETWEEN to_date(p_start) AND to_date(p_end)
+  WHERE e.visit_type_id = 'OFFICE' AND e.admit_date BETWEEN to_date(p_start) AND to_date(p_end)
   GROUP BY e.provider_id, pr.provider_name, pr.primary_facility_id;
 
 -- ---------------------------------------------------------------------------------------------

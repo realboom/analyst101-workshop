@@ -194,10 +194,11 @@ dim_provider = spark.createDataFrame(
 )
 dim_provider.write.mode("overwrite").saveAsTable("dim_provider")
 
-# --- dim_visit_type --- (non-standard types are excluded from PCP continuity)
+# --- dim_visit_type --- (no is_standard flag; the "standard visit" rule lives in the governed
+# assets as visit_type_id = 'OFFICE', not as a column here)
 dim_visit_type = spark.createDataFrame(
-    [(vid, vname, is_std) for (vid, vname, is_std, _w) in VISIT_TYPES],
-    "visit_type_id string, visit_type_name string, is_standard boolean",
+    [(vid, vname) for (vid, vname, _s, _w) in VISIT_TYPES],
+    "visit_type_id string, visit_type_name string",
 )
 dim_visit_type.write.mode("overwrite").saveAsTable("dim_visit_type")
 
@@ -560,9 +561,8 @@ display(spark.sql("""
            AS pcp_continuity_pct
   FROM fact_encounters e
   JOIN dim_patient p     ON e.patient_id = p.patient_id
-  JOIN dim_visit_type vt ON e.visit_type_id = vt.visit_type_id
   JOIN dim_facility fac  ON e.facility_id = fac.facility_id
-  WHERE vt.is_standard
+  WHERE e.visit_type_id = 'OFFICE'
   GROUP BY fac.region
   ORDER BY standard_visits DESC
 """))
