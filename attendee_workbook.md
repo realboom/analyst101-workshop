@@ -579,10 +579,6 @@ A benchmark is a set of *question → expected-SQL* pairs. On **Run**, Genie ans
    - **Good** — Genie's generated SQL produced the same result as your expected SQL.
    - **Bad** — it differs; the row shows a **failure analysis** and a **SQL diff** — Genie's *Model output SQL* next to your *Ground truth SQL* — so you can see exactly what went wrong (a dropped filter, extra columns, wrong grain).
 
-4. **Read it as before/after — this is the demo:**
-   - Run once on the **naive** agent (before Steps 1–2) for a **baseline**. The two rate phrasings drift, so Benchmark 2 or 3 scores **Bad** (Genie counts all visits → 65.5% instead of the governed 76.3%).
-   - Apply **Steps 1–2** (add the governed assets + the routing instruction), then **Run again**. The rate rows converge on **76.3%** and flip to **Good**. That green-on-re-run is your *quantified* proof of the lift — not a one-off eyeball.
-
 ### Monitor — curate from real usage
 
 The **Monitor** tab turns real usage into improvements. It logs the **actual questions** analysts asked this agent, the SQL Genie generated for each, and any feedback left on them.
