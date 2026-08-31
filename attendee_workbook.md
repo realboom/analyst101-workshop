@@ -529,7 +529,7 @@ Now ask that provider question and **Show generated code** — Genie calls the f
 
 > **The honest mechanism** (matches the docs): Genie is **nondeterministic** even with trusted assets — it *decides* whether to call the function/query or just learn the rule from it. So the badge isn't guaranteed on every ask. What *is* reliable is the **single governed definition**: the metric view and function define continuity **once**, in Unity Catalog. Call them directly (SQL, dashboards) and you get the **same number every time, by definition** — that's the real determinism. In Genie they act as an **anchor** so answers converge on the governed number instead of drifting by phrasing like the naive agent. To *maximize* Genie using the asset (and showing the badge), also add it as a **parameterized example query** tied to a representative question.
 
-**Make it repeatable — the Benchmark and Monitoring tabs.** The two-phrasing test above is the idea done *by hand*. Two tabs at the top of the agent turn it into something you can measure and curate over time.
+**Make it repeatable — the Benchmark and Monitor tabs.** The two-phrasing test above is the idea done *by hand*. Two tabs at the top of the agent turn it into something you can measure and curate over time.
 
 ### Benchmark — quantify the accuracy
 
@@ -583,11 +583,24 @@ A benchmark is a set of *question → expected-SQL* pairs. On **Run**, Genie ans
    - Run once on the **naive** agent (before Steps 1–2) for a **baseline**. The two rate phrasings drift, so Benchmark 2 or 3 scores **Bad** (Genie counts all visits → 65.5% instead of the governed 76.3%).
    - Apply **Steps 1–2** (add the governed assets + the routing instruction), then **Run again**. The rate rows converge on **76.3%** and flip to **Good**. That green-on-re-run is your *quantified* proof of the lift — not a one-off eyeball.
 
-### Monitoring — curate from real usage
+### Monitor — curate from real usage
 
-Monitoring is the **real questions** analysts asked this agent, the SQL Genie generated, and their 👍 / 👎 / *Fix it* feedback. It's your curation backlog: a missed question is exactly what you promote into a **synonym**, **SQL expression**, **example query**, or **trusted asset**. Curate from what people actually ask, don't guess. *(Step-by-step for this tab coming — see note below.)*
+The **Monitor** tab turns real usage into improvements. It logs the **actual questions** analysts asked this agent, the SQL Genie generated for each, and any feedback left on them.
 
-> **The loop:** **Monitoring** tells you *what to fix* → a trusted asset / instruction / example query *fixes it* → the **Benchmark** *proves it stayed fixed*. That's how a Genie Agent matures from "demo" to "trusted."
+**Walk it:**
+
+1. Open your Genie agent and select **Monitor** at the top.
+2. You'll see the log of questions people have asked — each row shows the **question**, the **SQL Genie generated**, and the answer, plus any 👍 / 👎 / *Fix it* feedback.
+3. Scan for the misses — 👎'd answers, or rows where the generated SQL is wrong. Each miss is a curation task: promote it into the right governed context —
+   - an everyday word Genie didn't map → add a **synonym**
+   - a metric it recomputed by hand → point it at the **metric view** (or add a **SQL expression**)
+   - a question it should route to the function but didn't → add an **example query** (the lever from earlier in Part 7)
+   - missing governed logic → register the **trusted asset** + a routing instruction
+4. Close the loop with the **Benchmark** tab: add the fixed question as a benchmark row and **Run**, so the fix is proven and stays fixed.
+
+> **Seed it before you demo.** The **Monitor** tab only fills from real asks, so it's empty on a brand-new agent. Ask the agent a few questions first — the two rate phrasings and the provider question from above — so the tab has content to show. Ask the naive *"what share of visits are with the patient's PCP?"* (the **65.5%** miss) and 👎 it: that's the exact row you then fix and re-benchmark, live.
+
+> **The loop:** **Monitor** tells you *what to fix* → a trusted asset / instruction / example query *fixes it* → the **Benchmark** *proves it stayed fixed*. That's how a Genie Agent matures from "demo" to "trusted."
 
 ## Part 8 - Author your own metric view & function *(extra exercise, if time)*
 
