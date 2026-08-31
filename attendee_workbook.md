@@ -529,12 +529,65 @@ Now ask that provider question and **Show generated code** — Genie calls the f
 
 > **The honest mechanism** (matches the docs): Genie is **nondeterministic** even with trusted assets — it *decides* whether to call the function/query or just learn the rule from it. So the badge isn't guaranteed on every ask. What *is* reliable is the **single governed definition**: the metric view and function define continuity **once**, in Unity Catalog. Call them directly (SQL, dashboards) and you get the **same number every time, by definition** — that's the real determinism. In Genie they act as an **anchor** so answers converge on the governed number instead of drifting by phrasing like the naive agent. To *maximize* Genie using the asset (and showing the badge), also add it as a **parameterized example query** tied to a representative question.
 
-**Make it repeatable — the Monitoring and Benchmarks tabs.** The two-phrasing test above is the idea done *by hand*; the agent has two tabs (top of **Genie Code**) that do it for real:
+**Make it repeatable — the Benchmark and Monitoring tabs.** The two-phrasing test above is the idea done *by hand*. Two tabs at the top of the agent turn it into something you can measure and curate over time.
 
-- **Benchmarks** — add a set of representative questions, each paired with the **expected answer** (or the known-correct SQL), then **Run**. Genie scores how many it gets right, so you can *quantify* accuracy instead of eyeballing one answer. Baseline the bare agent, register the metric view / function / SQL expressions, then **re-run to prove the lift** — the continuity question is the canonical row (phrasing-sensitive **65.5%** → governed **76.3%**). This is the productized version of the before/after you just did.
-- **Monitoring** — the **real questions** analysts asked this agent, the SQL Genie generated, and their 👍 / 👎 / *Fix it* feedback. It's your curation backlog: the questions that missed are exactly the ones to promote into a **synonym**, **SQL expression**, **example query**, or **trusted asset**. Curate from real usage, don't guess.
+### Benchmark — quantify the accuracy
 
-> **The loop:** **Monitoring** tells you *what to fix* → a trusted asset / expression *fixes it* → the **Benchmark** *proves it stayed fixed*. That's how a Genie Agent matures from "demo" to "trusted."
+A benchmark is a set of *question → expected-SQL* pairs. On **Run**, Genie answers each question its own way, executes both its SQL and your expected SQL, and scores whether they match — so you get a number, not a vibe.
+
+**Set it up:**
+
+1. Open your Genie agent and click **Benchmark** at the top of the agent.
+2. Click **+ Add benchmark**, then enter the **question** and the **SQL**. Add all three below. *(Benchmarks 2 and 3 use the **same** expected SQL on purpose — two phrasings of "the rate," one governed answer; that's how you prove the phrasing drift is gone.)*
+
+   **Benchmark 1 — facility ranking**
+   - Question: `Which facilities have the lowest PCP continuity, and how many standard visits do they have?`
+   - SQL:
+     ```sql
+     SELECT `Facility`, `Facility Code`, `Region`,
+            MEASURE(`Total Standard Visits`) AS total_standard_visits,
+            MEASURE(`PCP Continuity Ratio`)  AS pcp_continuity_ratio
+     FROM {{CATALOG}}.{{SCHEMA}}.pcp_continuity_metrics
+     GROUP BY ALL
+     ORDER BY pcp_continuity_ratio ASC
+     LIMIT 10
+     ```
+
+   **Benchmark 2 — "share of visits with the PCP"**
+   - Question: `What share of visits are with the patient's PCP?`
+   - SQL:
+     ```sql
+     SELECT MEASURE(`Total Standard Visits`) AS total_standard_visits,
+            MEASURE(`PCP Matched Visits`)     AS pcp_matched_visits,
+            MEASURE(`PCP Continuity Ratio`)   AS pcp_continuity_ratio
+     FROM {{CATALOG}}.{{SCHEMA}}.pcp_continuity_metrics
+     GROUP BY ALL
+     ```
+
+   **Benchmark 3 — "overall continuity rate"** *(same expected SQL as Benchmark 2)*
+   - Question: `What is the overall PCP continuity rate across all standard visits?`
+   - SQL:
+     ```sql
+     SELECT MEASURE(`Total Standard Visits`) AS total_standard_visits,
+            MEASURE(`PCP Matched Visits`)     AS pcp_matched_visits,
+            MEASURE(`PCP Continuity Ratio`)   AS pcp_continuity_ratio
+     FROM {{CATALOG}}.{{SCHEMA}}.pcp_continuity_metrics
+     GROUP BY ALL
+     ```
+
+3. **Run** the benchmarks. Each row comes back with an **assessment**:
+   - **Good** — Genie's generated SQL produced the same result as your expected SQL.
+   - **Bad** — it differs; the row shows a **failure analysis** and a **SQL diff** — Genie's *Model output SQL* next to your *Ground truth SQL* — so you can see exactly what went wrong (a dropped filter, extra columns, wrong grain).
+
+4. **Read it as before/after — this is the demo:**
+   - Run once on the **naive** agent (before Steps 1–2) for a **baseline**. The two rate phrasings drift, so Benchmark 2 or 3 scores **Bad** (Genie counts all visits → 65.5% instead of the governed 76.3%).
+   - Apply **Steps 1–2** (add the governed assets + the routing instruction), then **Run again**. The rate rows converge on **76.3%** and flip to **Good**. That green-on-re-run is your *quantified* proof of the lift — not a one-off eyeball.
+
+### Monitoring — curate from real usage
+
+Monitoring is the **real questions** analysts asked this agent, the SQL Genie generated, and their 👍 / 👎 / *Fix it* feedback. It's your curation backlog: a missed question is exactly what you promote into a **synonym**, **SQL expression**, **example query**, or **trusted asset**. Curate from what people actually ask, don't guess. *(Step-by-step for this tab coming — see note below.)*
+
+> **The loop:** **Monitoring** tells you *what to fix* → a trusted asset / instruction / example query *fixes it* → the **Benchmark** *proves it stayed fixed*. That's how a Genie Agent matures from "demo" to "trusted."
 
 ## Part 8 - Author your own metric view & function *(extra exercise, if time)*
 
