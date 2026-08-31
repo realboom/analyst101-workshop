@@ -502,10 +502,10 @@ GROUP BY `Region` ORDER BY continuity_pct DESC;
 Now wire the governed definitions into Genie so plain-language questions resolve to them.
 
 **First, see the problem — best-effort is phrasing-sensitive.** On a *bare* agent (no trusted asset), ask the same thing two ways and click **Show generated code** each time:
-- *"What is our overall PCP continuity rate?"* → Genie applies the standard-visits exclusion → **76.3%** ✅
-- *"What share of visits are with the patient's PCP?"* → Genie **drops** the `is_standard` filter → **65.5%** ❌
+- *"What is our overall PCP continuity rate?"* → Genie restricts to standard (office) visits → **76.3%** ✅
+- *"What share of visits are with the patient's PCP?"* → Genie counts **all** visit types → **65.5%** ❌
 
-Same question, an **11-point swing** by wording. Genie isn't "dumb" here — it read the column comments and got the first one right — it's just *not guaranteed*. That's the trust problem: two analysts phrase it differently and report two different numbers.
+Same question, an **11-point swing** by wording. Genie isn't "dumb" here — from the phrasing it inferred the standard-visits rule on the first one but not the second — and **nothing in the data forces it** (the standard-visits rule lives only in the governed assets, not as a flag on the tables). That's the trust problem: two analysts phrase it differently and report two different numbers.
 
 **Now anchor it to a governed definition — in two parts, because both matter:**
 1. **Register the assets.** Genie Code → **trusted assets** → add the metric view `pcp_continuity_metrics` (and, for provider-level questions, the function `pcp_continuity_by_provider`). *(This makes them available — but on its own, Genie often still hand-writes its own SQL.)* **Only register what you'll actually point Genie at** (via the instruction or an example query below) — an asset nothing steers Genie to just adds noise. Assets you only call in SQL (like `standard_visit_count()`) don't need to be registered on the agent at all.

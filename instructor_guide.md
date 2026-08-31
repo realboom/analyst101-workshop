@@ -404,8 +404,9 @@ your Databricks Day demo:
   *ratio* (non-additive), so the view keeps it correct at every grain where a copy-pasted calc field
   wouldn't. *(Slides 15–19.)*
 - **Part 7 — trusted assets + the benchmark:** the money demo, **verified**. On the NAIVE agent, ask
-  *"overall PCP continuity rate?"* → **76.3%** (Genie applies `is_standard` from the comments) vs
-  *"what share of visits are with the patient's PCP?"* → **65.5%** (drops the exclusion). Same
+  *"overall PCP continuity rate?"* → **76.3%** (Genie infers the standard-visits restriction from the
+  phrasing) vs *"what share of visits are with the patient's PCP?"* → **65.5%** (counts all visit
+  types). Same
   question, 11-point swing by phrasing — best-effort is *inconsistent*. On the GOVERNED agent (metric
   view + function in scope) both phrasings anchor to **76.3%**. **Be accurate on the mechanism:** per
   Databricks docs, Genie is **nondeterministic even with trusted assets** — it decides whether to call
@@ -437,8 +438,9 @@ Tableau-heavy attendees — anchor the metric view to "published data source, bu
 *every* tool." Keep authoring (Part 8) light for a mixed room; it's a take-home pattern, not a stall point.
 
 > **Benchmark is verified** (tested via the Genie API): governed number = **76.3%**; a bare agent
-> gives 76.3% for "continuity rate" but **65.5%** for "share of visits with the patient's PCP" (drops
-> the `is_standard` exclusion) — the phrasing-variance contrast is real. **Still verify the inferred
+> gives 76.3% for "continuity rate" but **65.5%** for "share of visits with the patient's PCP" (counts
+> all visit types — the standard-visits rule isn't in the data, only in the governed assets) — the
+> phrasing-variance contrast is real. **Still verify the inferred
 > UI labels live:** the **trusted assets** location in Genie Code, the **"Trusted" badge**,
 > **Catalog Explorer → Create → Metric view** AI-assisted authoring, and the **Monitoring** /
 > **Benchmarks** tab labels + flow — fix any that drift.
