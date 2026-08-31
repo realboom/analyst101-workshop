@@ -384,7 +384,8 @@ the metric view / SQL functions on Day 2 *are* referenced by name, which is the 
 # DAY 2 - Advanced features + build-your-own (~1h50, 12:00-1:50 CT)
 
 Day 2 mirrors the **Databricks Day advanced half** (the "confidence stack": trusted SQL functions →
-metric views → trusted assets in Genie), then closes with a free-build capstone. All the advanced
+metric views → trusted assets in Genie), then closes with a free build and a take-home capstone
+attendees run on their own data. All the advanced
 assets are pre-deployed on the shared schema (`pcp_continuity_metrics` + the 3 functions); see
 `advanced_module/README.md` for the deploy + the demo talk track that maps to the deck.
 
@@ -448,11 +449,14 @@ Tableau-heavy attendees — anchor the metric view to "published data source, bu
 
 ### Break (12:55-1:05)
 
-## Segment 2 - Capstone build + share-outs (1:05-1:45)
-Each analyst builds on `{{CATALOG}}.{{SCHEMA}}` (or rebuilds one of their own Tableau dashboards) —
-applying what they want, including a governed metric from Segment 1. Facilitators float; starter
-scenarios are in the Attendee Workbook capstone. Then each shares for 3–5 minutes: what they built,
-what surprised them.
+## Segment 2 - Free build + capstone planning + share-outs (1:05-1:45)
+Two tracks — let each analyst pick: **(a) cement the skills** with a last free-build on the synthetic
+`{{CATALOG}}.{{SCHEMA}}` (a scorecard, a scatter, a Genie-first exploration, a governed metric from
+Segment 1), or **(b) plan their take-home** — the Attendee Workbook **Capstone** is now a *leave-behind*
+they run on their **own** data, so use this time to help them map their real fact/dimension tables,
+pick the first dashboard or Genie Agent to build, and name the metric worth governing first.
+Facilitators float. Then each shares 3–5 minutes: what they built on the synthetic data **and/or what
+they'll build back home**.
 - Handle advanced asks live: drill hierarchies, calculated measures, Genie follow-ups, saving a
   Genie answer into a dashboard, and the publish/share/permissions story versus Tableau Server.
 

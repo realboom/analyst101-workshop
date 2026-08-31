@@ -616,28 +616,33 @@ Grant `EXECUTE` to your Genie users, register these as trusted assets, and add a
 
 ---
 
-# Capstone - build your own scenario
+# Capstone (take-home) — apply this to your own data
 
-Pick a scenario (yours, or one below) and build it. Instructors will float to help. Aim for something you can show the group in a few minutes. Same loop as Day 1: define a dataset on the Data tab, then add visualizations on the Canvas (set Dataset, Visualization type, and fields).
+This is your **leave-behind**. The workshop used synthetic data so you could learn the moves safely; the capstone is where you point those same moves at **your own business data**. Use it back at your desk — pick a real question your team asks and build the answer here: a dashboard, a Genie Agent, or a governed metric.
 
-**Starter scenarios:**
+**Start by thinking about your data:**
+- What are your core **fact** and **dimension** tables (the things you count, and the things you slice by)?
+- What's the one **metric** whose definition people argue about? That's your first governed metric view.
+- Which **Tableau dashboard** would you most want to rebuild — and what would "better" look like?
+- What's a question people ask in Slack/email that a **Genie Agent** on your data could just answer?
 
-| Scenario | Good for practicing | Starter query (adapt freely) |
+**Scenario ideas — pick one, or bring your own (all on *your* data):**
+
+| Scenario | What it practices | On your data, think about… |
 |---|---|---|
-| Provider outcomes scorecard | aggregation, ranking, thresholds | `SELECT p.provider_name, COUNT(*) enc, ROUND(100.0*SUM(e.complication_flag)/COUNT(*),1) comp_rate FROM {{CATALOG}}.{{SCHEMA}}.fact_encounters e JOIN {{CATALOG}}.{{SCHEMA}}.dim_provider p USING(provider_id) GROUP BY 1 HAVING enc>200 ORDER BY comp_rate DESC` |
-| {{PROCEDURE_EXAMPLE}} deep-dive | filtering to a procedure, trend | filter `primary_procedure_code = '{{PROCEDURE_CODE}}'`; trend LOS and readmit over time; split by facility |
-| Cost vs. outcome | two measures, scatter | `SELECT f.facility_name, AVG(e.total_paid) avg_paid, 100.0*SUM(e.readmitted_30d)/COUNT(*) readmit_rate FROM {{CATALOG}}.{{SCHEMA}}.fact_encounters e JOIN {{CATALOG}}.{{SCHEMA}}.dim_facility f USING(facility_id) GROUP BY 1` |
-| Payer mix by region | stacked bar, categorical split | `SELECT f.region, e.payer_type, COUNT(*) enc FROM {{CATALOG}}.{{SCHEMA}}.fact_encounters e JOIN {{CATALOG}}.{{SCHEMA}}.dim_facility f USING(facility_id) GROUP BY 1,2` |
-| Genie-first | NL querying, then save to dashboard | ask the Genie Agent, then add a good answer to a dashboard |
-| Rebuild one of your Tableau dashboards | direct comparison | recreate a dashboard you know well and note what's easier and what's missing |
+| A team / entity scorecard | aggregation, ranking, thresholds | your KPIs by rep, store, product, or region — rank them and threshold the ones that matter |
+| A deep-dive on one segment | filtering, trend over time | pick one product line, customer segment, or cohort and trend its key measures |
+| Two measures against each other | scatter, correlation | cost vs. outcome, spend vs. revenue, effort vs. result — one point per entity |
+| A categorical mix | stacked bar, share-of | your mix by channel, category, or segment across a dimension |
+| Genie-first exploration | NL querying → save to dashboard | ask your governed data plain-language questions, then pin the good answers |
+| A governed metric | metric view + trusted asset | define your most-argued-about metric **once**, so every dashboard and Genie answer matches |
+| Rebuild a Tableau dashboard | direct comparison | recreate one you know well; note what's easier and what's missing |
 
-**As you build, try at least one of each:**
+**Techniques to work in (whatever your scenario):**
 
 - A filter and cross-filtering between two widgets.
 - A drill-down hierarchy.
-- A question in Genie, with the SQL revealed.
-- **(Advanced)** a governed metric — query `pcp_continuity_metrics` with `MEASURE()`, or call `pcp_continuity_by_provider()`, from Parts 5–6.
+- A Genie question with the SQL revealed.
+- A governed **metric view** for your headline number (the Part 8 pattern, on your data).
 
-**Share-out:** be ready to show what you built, what surprised you, and your honest read on where this fits versus Tableau.
-
-**A scatter tip (for cost vs. outcome):** set the X axis to one measure (e.g. `avg_paid`), the Y axis to the other (e.g. `readmit_rate`), and the point label to `facility_name`.
+**Before you leave, jot down** your first move back home: the dashboard or Genie Agent you'll build, the tables it needs, and the one metric worth governing first.
