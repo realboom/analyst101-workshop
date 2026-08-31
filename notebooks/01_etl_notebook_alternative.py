@@ -60,6 +60,14 @@ print("Will write table :", target)
 # MAGIC   format => 'csv',
 # MAGIC   header => 'true'
 # MAGIC )
+# MAGIC
+# MAGIC -- SELECT *
+# MAGIC -- FROM read_files(
+# MAGIC --   '/Volumes/' || :catalog || '/' || :schema || '/landing/facilities_raw.' || :profile || '.csv',
+# MAGIC --   format => 'csv',
+# MAGIC --   header => 'true',
+# MAGIC --   schema => 'facility_id INT, facility_name STRING, region STRING, beds INT, opened_date DATE'
+# MAGIC -- )
 
 # COMMAND ----------
 
