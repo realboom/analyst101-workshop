@@ -393,15 +393,15 @@ assets are pre-deployed on the shared schema (`pcp_continuity_metrics` + the 3 f
 - Frame the day: Day 1 was *fast* answers; Day 2 is *trustworthy* answers — governed metrics.
 
 ## Segment 1 - Advanced features: governed metrics & trusted assets (12:10-12:55)
-Walk the **Workbook Day-2 Parts A–D** on the PCP-continuity use case. This is the hands-on version of
+Walk the **Workbook Day-2 Parts 5–8** on the PCP-continuity use case. This is the hands-on version of
 your Databricks Day demo:
-- **Part A — SQL functions:** call `pcp_continuity_ratio()` / `pcp_continuity_by_provider()` by name;
+- **Part 5 — SQL functions:** call `pcp_continuity_ratio()` / `pcp_continuity_by_provider()` by name;
   deterministic, parameterized, `EXECUTE`-granted, logic hidden (PHI-safe). *(Deck slides 12–14.)*
-- **Part B — metric views:** query `pcp_continuity_metrics` with `MEASURE()`; re-slice by
+- **Part 6 — metric views:** query `pcp_continuity_metrics` with `MEASURE()`; re-slice by
   `Facility` → `Region` → `Encounter Month`. Land the **query-time grouping** point — continuity is a
   *ratio* (non-additive), so the view keeps it correct at every grain where a copy-pasted calc field
   wouldn't. *(Slides 15–19.)*
-- **Part C — trusted assets + the benchmark:** the money demo, **verified**. On the NAIVE agent, ask
+- **Part 7 — trusted assets + the benchmark:** the money demo, **verified**. On the NAIVE agent, ask
   *"overall PCP continuity rate?"* → **76.3%** (Genie applies `is_standard` from the comments) vs
   *"what share of visits are with the patient's PCP?"* → **65.5%** (drops the exclusion). Same
   question, 11-point swing by phrasing — best-effort is *inconsistent*. On the GOVERNED agent (metric
@@ -427,12 +427,12 @@ your Databricks Day demo:
     **76.3%**), not just eyeball one answer; open **Monitoring** to show the real question log + 👍/👎 /
     *Fix it* feedback that becomes the curation backlog. Framing: **Monitoring = what to fix, trusted
     assets = the fix, Benchmarks = proof it holds.**
-- **Part D — author your own:** the "go do this on your data" path — a metric-view measure
+- **Part 8 — author your own:** the "go do this on your data" path — a metric-view measure
   (AI-assisted or YAML) and a SQL function in their own schema.
 
-**Coaching cues:** query-focused/skeptics love Parts A–C (governed, auditable, referenced by name);
+**Coaching cues:** query-focused/skeptics love Parts 5–7 (governed, auditable, referenced by name);
 Tableau-heavy attendees — anchor the metric view to "published data source, but one definition for
-*every* tool." Keep authoring (Part D) light for a mixed room; it's a take-home pattern, not a stall point.
+*every* tool." Keep authoring (Part 8) light for a mixed room; it's a take-home pattern, not a stall point.
 
 > **Benchmark is verified** (tested via the Genie API): governed number = **76.3%**; a bare agent
 > gives 76.3% for "continuity rate" but **65.5%** for "share of visits with the patient's PCP" (drops
