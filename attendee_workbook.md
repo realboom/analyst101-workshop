@@ -373,15 +373,15 @@ FROM AI_FORECAST(TABLE(monthly), horizon => '2026-06-01', time_col => 'ds', valu
 
 Now the fun part. Your dashboard is published — and a published dashboard already has an **Ask Genie** box at the bottom for quick questions on just that data. Here you'll build the full **Genie Agent** (this is what used to be called a "Genie space") on the same data, give it a few instructions, and ask questions in plain language.
 
-**Step 1 · Create a Genie Agent — on the table *you* built.**
+**Step 1 · Create a Genie Agent — on the shared tables (plus your own `dim_facility`, if you built one).**
 
 - In the left sidebar, click **Genie Agents** → **New** (top-right). *(If your workspace still says "Genie" / "Genie spaces," it's the same thing.)*
 - Add these **data sources** (click **+ Add data** / the table picker):
   1. From the **shared** schema `{{CATALOG}}.{{SCHEMA}}`: **`fact_encounters`**, **`dim_provider`**, **`dim_diagnosis`**, **`dim_procedure`**.
-  2. **⭐ Your own table from Part 0:** **`{{CATALOG}}.analyst101_<you>.dim_facility`** — add *this* as the facility dimension, and **do not** add the shared `dim_facility`. It has the same 12 facilities (same `facility_id`s), so it joins to `fact_encounters` cleanly.
+  2. **`dim_facility`** — use the **shared** `{{CATALOG}}.{{SCHEMA}}.dim_facility`. **⭐ If you built your own in Part 0**, add **`{{CATALOG}}.analyst101_<you>.dim_facility`** instead (and **don't** also add the shared one) — it has the same 12 facilities and `facility_id`s, so either one joins to `fact_encounters` cleanly.
 - Click **Create**. **Genie Code** launches automatically — that's where you add instructions and trusted assets.
 
-> **This closes the loop:** the raw file you cleaned into a governed `dim_facility` back in Part 0 is now the facility dimension powering your Genie Agent. Ask a facility- or region-level question (below) and Genie answers straight off *your* table.
+> **If you used your own `dim_facility`, this closes the loop:** the raw file you cleaned into a governed table back in Part 0 is now the facility dimension powering your Genie Agent — ask a facility- or region-level question (below) and Genie answers straight off *your* table.
 
 **Step 2 · Add instructions.**
 

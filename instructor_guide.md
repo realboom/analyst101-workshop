@@ -305,12 +305,11 @@ knows how to join things. We just add a few instructions on top."
 
 **Do (Workbook Part 4) - everyone on their own:**
 1. Left sidebar → **Genie Agents** → **New** → select shared `fact_encounters`, `dim_provider`,
-   `dim_diagnosis`, `dim_procedure`, **plus each attendee's own `analyst101_<user>.dim_facility`**
-   (the Part 0 build) *instead of* the shared `dim_facility` → **Create**. **Genie Code** launches
-   automatically. *(This closes the loop — their governed table becomes the facility dimension. It has
-   the same `facility_id`s as the shared dim, so it joins to `fact_encounters` cleanly. Their table has
-   no declared FK, so the join relies on the instruction hint — which is in the block — not auto-FK
-   metadata. If someone's ETL build failed, have them use the shared `dim_facility` instead.)*
+   `dim_diagnosis`, `dim_procedure`, and the shared **`dim_facility`** → **Create**. **Genie Code**
+   launches automatically. *(If an attendee built their own `analyst101_<user>.dim_facility` in Part 0,
+   have them add **that** one instead of the shared `dim_facility` — it has the same `facility_id`s, so
+   it joins to `fact_encounters` cleanly, and it closes the loop from their ETL build. Their own table
+   has no declared FK, so that join relies on the instruction hint in the block, not auto-FK metadata.)*
 2. In **Genie Code** (the agent's **Instructions** area), **paste the prepared instructions block**
    (in `genie/genie_space_config.md`, also pre-shared in the Workbook). Save.
 3. Let the **attendees drive**. Have them ask a few:
