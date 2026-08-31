@@ -45,7 +45,7 @@ CREATE OR REPLACE VIEW {{CATALOG}}.{{SCHEMA}}.pcp_continuity_metrics
 COMMENT 'Governed PCP continuity metrics over STANDARD visits only. Define the ratio once; every dashboard, notebook, and Genie Agent computes it identically.'
 WITH METRICS
 LANGUAGE YAML
-AS $$
+AS $yaml$
 version: 0.1
 source: {{CATALOG}}.{{SCHEMA}}.encounters_enriched
 filter: visit_type_id = 'OFFICE'
@@ -65,7 +65,7 @@ measures:
     expr: COUNT_IF(is_pcp_match)
   - name: PCP Continuity Ratio
     expr: TRY_DIVIDE(COUNT_IF(is_pcp_match), COUNT(1))
-$$;
+$yaml$;
 
 -- 3) SQL functions (trusted assets Genie can call) -------------------------------------------
 -- A STANDARD visit is visit_type_id 'OFFICE'; the rule is encoded here, not on the dimension.

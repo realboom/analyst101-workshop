@@ -549,7 +549,7 @@ CREATE OR REPLACE VIEW {{CATALOG}}.analyst101_<you>.pcp_continuity_metrics
 COMMENT 'Governed PCP continuity metrics over STANDARD visits only. Define the ratio once.'
 WITH METRICS
 LANGUAGE YAML
-AS $$
+AS $yaml$
 version: 0.1
 source: {{CATALOG}}.{{SCHEMA}}.encounters_enriched
 filter: visit_type_id = 'OFFICE'
@@ -569,7 +569,7 @@ measures:
     expr: COUNT_IF(is_pcp_match)
   - name: PCP Continuity Ratio
     expr: TRY_DIVIDE(COUNT_IF(is_pcp_match), COUNT(1))
-$$;
+$yaml$;
 ```
 
 Query it like the shared one — measures via `MEASURE()`, grouped by a dimension:
