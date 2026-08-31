@@ -529,7 +529,7 @@ Now ask the continuity question, any phrasing, and **Show generated code**: Geni
 
 You've *used* the governed assets in Parts 5–7. Now **build them yourself** in your own schema, so you have the pattern for your real data. You'll create the two you saw: the `pcp_continuity_metrics` metric view and the `pcp_continuity_by_provider` function. Build them in **`{{CATALOG}}.analyst101_<you>`** (your own schema); they read the shared base data, which you have SELECT on.
 
-**1 · The metric view — one governed definition.** A metric view's `source` is a single relation, so continuity sources the shared **`encounters_enriched`** convenience view (one row per encounter with `is_standard` and `is_pcp_match` already computed). Run this in a SQL editor:
+**1 · The metric view — one governed definition.** A metric view's `source` is a single relation, so continuity sources the shared **`encounters_enriched`** convenience view (one row per encounter with `visit_type_id` and an `is_pcp_match` flag already computed; standard visits are `visit_type_id = 'OFFICE'`). Run this in a SQL editor:
 
 ```sql
 CREATE OR REPLACE VIEW {{CATALOG}}.analyst101_<you>.pcp_continuity_metrics
@@ -541,7 +541,7 @@ LANGUAGE YAML
 AS $$
 version: 0.1
 source: {{CATALOG}}.{{SCHEMA}}.encounters_enriched
-filter: is_standard = true
+filter: visit_type_id = 'OFFICE'
 dimensions:
   - name: Facility
     expr: facility_name

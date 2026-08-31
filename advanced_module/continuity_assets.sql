@@ -27,7 +27,6 @@ SELECT
   f.region,
   e.visit_type_id,
   vt.visit_type_name,
-  (e.visit_type_id = 'OFFICE')        AS is_standard,
   e.patient_id,
   p.home_facility_id,
   p.assigned_pcp_id,
@@ -49,7 +48,7 @@ LANGUAGE YAML
 AS $$
 version: 0.1
 source: {{CATALOG}}.{{SCHEMA}}.encounters_enriched
-filter: is_standard = true
+filter: visit_type_id = 'OFFICE'
 dimensions:
   - name: Facility
     expr: facility_name
