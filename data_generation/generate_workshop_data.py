@@ -20,6 +20,8 @@
 # MAGIC | `dim_facility` | one row per facility | hospital/clinic name, type, city/state/region |
 # MAGIC | `dim_diagnosis` | one row per ICD-10 code | ICD-10 code + description + clinical category |
 # MAGIC | `dim_procedure` | one row per procedure code | procedure code + description + category |
+# MAGIC | `dim_patient` | one row per patient | assigned PCP + home facility (drives PCP continuity) |
+# MAGIC | `dim_visit_type` | one row per visit type | visit-type reference; non-standard types are excluded from PCP continuity |
 # MAGIC | `fact_encounters` | one row per patient encounter | the analytic fact table |
 
 # COMMAND ----------
