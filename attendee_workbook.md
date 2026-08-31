@@ -536,9 +536,9 @@ Now ask that provider question and **Show generated code** — Genie calls the f
 
 > **The loop:** **Monitoring** tells you *what to fix* → a trusted asset / expression *fixes it* → the **Benchmark** *proves it stayed fixed*. That's how a Genie Agent matures from "demo" to "trusted."
 
-## Part 8 - Author your own (do this on your own data)
+## Part 8 - Author your own metric view & function *(extra exercise, if time)*
 
-You've *used* the governed assets in Parts 5–7. Now **build them yourself** in your own schema, so you have the pattern for your real data. You'll create the two you saw: the `pcp_continuity_metrics` metric view and the `pcp_continuity_by_provider` function. Build them in **`{{CATALOG}}.analyst101_<you>`** (your own schema); they read the shared base data, which you have SELECT on.
+You've *used* the governed assets in Parts 5–7 — now **build them yourself** to get hands-on with authoring metric views and SQL functions. You'll re-create the two you saw: the `pcp_continuity_metrics` metric view and the `pcp_continuity_by_provider` function. Build them in **`{{CATALOG}}.analyst101_<you>`** (your own schema), reading the shared **synthetic** base data you have SELECT on. Same steps, same syntax you'll use to stand up metric views and functions on your **own** data back home — this is the reps, on safe data.
 
 **1 · The metric view — one governed definition.** A metric view's `source` is a single relation, so continuity sources the shared **`encounters_enriched`** convenience view (one row per encounter with `visit_type_id` and an `is_pcp_match` flag already computed; standard visits are `visit_type_id = 'OFFICE'`). Run this in a SQL editor:
 

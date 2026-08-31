@@ -430,8 +430,9 @@ your Databricks Day demo:
     **76.3%**), not just eyeball one answer; open **Monitoring** to show the real question log + 👍/👎 /
     *Fix it* feedback that becomes the curation backlog. Framing: **Monitoring = what to fix, trusted
     assets = the fix, Benchmarks = proof it holds.**
-- **Part 8 — author your own:** the "go do this on your data" path — a metric-view measure
-  (AI-assisted or YAML) and a SQL function in their own schema.
+- **Part 8 — author your own (extra, if time):** hands-on authoring reps on the *synthetic* data — a
+  metric-view measure (AI-assisted or YAML) and a SQL function, built in their own schema. It's the
+  syntax/pattern for standing these up on their real data later, not a "bring your own data" step.
 
 **Coaching cues:** query-focused/skeptics love Parts 5–7 (governed, auditable, referenced by name);
 Tableau-heavy attendees — anchor the metric view to "published data source, but one definition for
