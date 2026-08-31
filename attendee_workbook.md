@@ -471,7 +471,7 @@ It's a **table function** — you query it like a table, but the provider-grain 
 
 > **When do you reach for a function instead of the metric view?** When the question needs a **grain the metric view doesn't model**. The metric view (Part 6) rolls up by facility / region / month — it has **no provider dimension** — so *continuity by provider* is a job only the function can do. That's the clean division of labor: metric view for governed rollups, functions for the grains (and parameterized logic) it can't express.
 >
-> **A note on Genie + functions:** called directly (here, or from a dashboard/app) a function is fully deterministic. *Inside* Genie, functions are available as trusted assets, but Genie tends to prefer the metric view for anything it can answer that way — registering a function (or a text instruction to use it) is **not** enough to make Genie call it. What works: add the question as an **example query** whose SQL calls the function (Genie Code → Configure → Examples). Tested: with an example query pairing *"which providers have the lowest PCP continuity?"* to a `pcp_continuity_by_provider()` query, Genie called the function; without it, Genie forced the question through the metric view (which has no provider dimension) and returned nothing.
+> **A note on Genie + functions — this is a Part 7 concern, not something to set up here.** Right now (Part 5) you're just calling the function in a SQL editor, where it's fully deterministic. *Inside* Genie it behaves differently, and you'll deal with that when you build the agent in **Part 7**: Genie tends to prefer the metric view for anything it can answer that way, so adding the function (or a text instruction to use it) is **not** enough to make Genie call it. The fix, in Part 7, is to add an **example query** whose SQL calls the function (Configure → example queries) — and the **provider-grain question is where you test it**. Tested: pairing *"which providers have the lowest PCP continuity?"* to a `pcp_continuity_by_provider()` example query made Genie call the function; without it, Genie forced the question through the metric view (which has no provider dimension) and returned nothing.
 
 ## Part 6 - Metric views: one metric, one number
 
@@ -514,7 +514,18 @@ Same question, an **11-point swing** by wording. Genie isn't "dumb" here — fro
 
    *Note what this instruction does **not** contain: the standard-visits/assigned-PCP rules. Those live in the metric view and function — restating them here would be redundant and would just hand Genie the recipe to hand-write the logic instead of calling the governed asset. Route to the asset; let the asset own the definition.*
 
-Now ask the continuity question, any phrasing, and **Show generated code**: Genie calls ``MEASURE(`PCP Continuity Ratio`)`` / the function **by name** and returns **76.3%** — even for wordings that gave the naive agent 65.5%. *(In our testing, registering the asset alone left Genie hand-writing SQL; adding the instruction flipped it to call the governed asset by name on every phrasing. The registration makes it available; the instruction makes it preferred.)*
+Now ask the continuity question, any phrasing, and **Show generated code**: Genie calls ``MEASURE(`PCP Continuity Ratio`)`` **by name** and returns **76.3%** — even for wordings that gave the naive agent 65.5%. *(In our testing, registering the asset alone left Genie hand-writing SQL; adding the instruction flipped it to call the metric view by name on every phrasing. The registration makes it available; the instruction makes it preferred.)*
+
+**One more lever — the provider question needs an example query.** Steps 1–2 anchor the *rate* question to the metric view. The provider-grain question is different: Genie prefers the metric view and generally **won't call `pcp_continuity_by_provider()` on its own** — even for *"which providers have the lowest continuity?"*, which the metric view can't answer (it has no provider dimension). Registering the function and the routing instruction is **not** enough; give Genie an **example query** (Configure → example queries):
+- Question: *"Which providers have the lowest PCP continuity, with at least 200 standard visits?"*
+- SQL:
+  ```sql
+  SELECT provider_name, standard_visits, ROUND(continuity_ratio*100,1) AS continuity_pct
+  FROM {{CATALOG}}.{{SCHEMA}}.pcp_continuity_by_provider()
+  WHERE standard_visits >= 200 ORDER BY continuity_ratio ASC
+  ```
+
+Now ask that provider question and **Show generated code** — Genie calls the function. *(Tested: without the example query, Genie forced the question through the metric view and returned nothing.)* This is the escalation ladder: **register → instruct → example query**, escalating until Genie uses the asset — a function usually needs the example query; the metric view often just needs the instruction.
 
 > **The honest mechanism** (matches the docs): Genie is **nondeterministic** even with trusted assets — it *decides* whether to call the function/query or just learn the rule from it. So the badge isn't guaranteed on every ask. What *is* reliable is the **single governed definition**: the metric view and function define continuity **once**, in Unity Catalog. Call them directly (SQL, dashboards) and you get the **same number every time, by definition** — that's the real determinism. In Genie they act as an **anchor** so answers converge on the governed number instead of drifting by phrasing like the naive agent. To *maximize* Genie using the asset (and showing the badge), also add it as a **parameterized example query** tied to a representative question.
 
