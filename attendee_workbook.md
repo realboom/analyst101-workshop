@@ -363,17 +363,17 @@ FROM AI_FORECAST(TABLE(monthly), horizon => '2026-06-01', time_col => 'ds', valu
 
 > **Why it matters:** define "readmission rate" once and every dashboard and Genie answer uses the same definition. No more slightly different numbers across analysts.
 
+**Step 3 · Publish your dashboard.**
+
+- Click **Publish** (top right) to publish the dashboard you just built — it's now shareable with your team, and everyone sees the same governed numbers.
+
 ---
 
-## Part 4 - Publish your dashboard and ask Genie
+## Part 4 - Build a Genie Agent
 
-Now the fun part. You'll publish the dashboard you just built, create a **Genie Agent** (this is what used to be called a "Genie space") on the same data, give it a few instructions, and ask questions in plain language.
+Now the fun part. Your dashboard is published — and a published dashboard already has an **Ask Genie** box at the bottom for quick questions on just that data. Here you'll build the full **Genie Agent** (this is what used to be called a "Genie space") on the same data, give it a few instructions, and ask questions in plain language.
 
-**Step 1 · Publish.**
-
-- Click **Publish** (top right) to publish your dashboard. *(Your published dashboard also has an **Ask Genie** box at the bottom — a quick way to ask questions of just this dashboard's data. We'll build the full agent next.)*
-
-**Step 2 · Create a Genie Agent — on the table *you* built.**
+**Step 1 · Create a Genie Agent — on the table *you* built.**
 
 - In the left sidebar, click **Genie Agents** → **New** (top-right). *(If your workspace still says "Genie" / "Genie spaces," it's the same thing.)*
 - Add these **data sources** (click **+ Add data** / the table picker):
@@ -383,7 +383,7 @@ Now the fun part. You'll publish the dashboard you just built, create a **Genie 
 
 > **This closes the loop:** the raw file you cleaned into a governed `dim_facility` back in Part 0 is now the facility dimension powering your Genie Agent. Ask a facility- or region-level question (below) and Genie answers straight off *your* table.
 
-**Step 3 · Add instructions.**
+**Step 2 · Add instructions.**
 
 - In **Genie Code** (the agent's **Instructions** area), paste the block below (your instructor also shares it). Save.
 
@@ -398,9 +398,9 @@ Conventions:
 - Show plain-language names in results (provider_name, facility_name, region, clinical_category,
   procedure_description), not the id columns.
 ```
-> *Why no "data model / joins" here:* the shared tables' joins are already declared as foreign keys, and the example query (Step 4) shows the `dim_facility` join — so restating joins in prose is redundant. Text instructions are a last resort; relationships and examples are more reliable. The only non-declared join (shared `fact_encounters` → your own `dim_facility`) is covered by the example query + your PK from Part 0 Step 6; if a facility question ever misses, define it as an explicit **relationship** in Genie Code, not in text.
+> *Why no "data model / joins" here:* the shared tables' joins are already declared as foreign keys, and the example query (Step 3) shows the `dim_facility` join — so restating joins in prose is redundant. Text instructions are a last resort; relationships and examples are more reliable. The only non-declared join (shared `fact_encounters` → your own `dim_facility`) is covered by the example query + your PK from Part 0 Step 6; if a facility question ever misses, define it as an explicit **relationship** in Genie Code, not in text.
 
-**Step 4 · Add SQL-based context — this is what really tunes Genie.** Free text is the *last* resort; **SQL-based context is more reliable**. Add a few high-value pieces in Genie Code (the same levers Databricks Day goes deep on):
+**Step 3 · Add SQL-based context — this is what really tunes Genie.** Free text is the *last* resort; **SQL-based context is more reliable**. Add a few high-value pieces in Genie Code (the same levers Databricks Day goes deep on):
 
 - **Synonyms** — map everyday words to a **column** (synonyms attach to columns, not tables). In Genie Code → the data source → **Edit column metadata** → pick the column → **Synonyms** field. Add each of these:
   - `dim_provider.provider_name` ← **doctor**, **physician**
@@ -425,14 +425,14 @@ Conventions:
 
 > **Priority order (what Genie reads, best first):** column comments/keys → **synonyms** → **SQL expressions** (metrics/filters) → **example queries** → free-text instructions *last*. The full set is in `genie/genie_space_config.md`.
 
-**Step 5 · Ask a few questions.** Try these, then your own:
+**Step 4 · Ask a few questions.** Try these, then your own:
 
 - "How many encounters were there in 2024 by region?" — *`region` comes from the `dim_facility` you built.*
 - "Which **doctors** have the highest 30-day readmission rate, with at least 200 encounters?" — *exercises your `doctor` → `provider_name` synonym.*
 - "Which facilities have the highest 30-day readmission rate, with at least 200 encounters?" — *your `dim_facility` + the example query you just added.*
 - "What is the average length of stay for a {{PROCEDURE_EXAMPLE}}?"
 
-**Step 6 · Show the SQL.** On any answer, click **Show generated code** to see the Databricks SQL Genie wrote — for the facility/region questions you'll see it joining `fact_encounters` to *your* `analyst101_<you>.dim_facility`.
+**Step 5 · Show the SQL.** On any answer, click **Show generated code** to see the Databricks SQL Genie wrote — for the facility/region questions you'll see it joining `fact_encounters` to *your* `analyst101_<you>.dim_facility`.
 
 > **Why this works — the setup drives the answer.** Genie's quality comes from the *setup*, not clever prompting. The context it reads is: **well-annotated tables** (every column commented), **explicit joins and keys**, and a **tight scope** (≤5 well-modeled tables — the shared ones plus your `dim_facility`). That's why the shared tables just work — and it's exactly why you annotated your own `dim_facility` in **Part 0, Step 6**. Curated, documented tables beat raw wide ones. *(This is the Databricks Day theme — "maturing Genie": engineer accuracy into the setup, then pin the known-good answers.)*
 >

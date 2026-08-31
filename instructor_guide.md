@@ -277,6 +277,8 @@ governed definition layer (the Tableau published-data-source parity story).
 2. Introduce **metric views**: "This is your published data source. Measures and dimensions defined
    once, governed, reused in dashboards and Genie." Show the concept (a readmission-rate measure
    defined once).
+3. **Publish** the dashboard (top-right **Publish**) to close out the build — it's now shareable and
+   everyone sees the same governed numbers.
 
 **Point out:**
 - One definition of "readmission rate," used identically everywhere. No more three analysts with
@@ -285,14 +287,14 @@ governed definition layer (the Tableau published-data-source parity story).
 
 ---
 
-## Segment 4 - Publish your dashboard and stand up a Genie Agent (3:05-3:40)
+## Segment 4 - Stand up a Genie Agent (3:05-3:40)
 
 > **Naming note:** "Genie spaces" are now **Genie Agents** in the UI. Creating one *from a dashboard*
 > is no longer a reliable button — create the agent from the **Genie Agents** sidebar on the same
 > tables. The published dashboard's **Ask Genie** box is a quick embedded ask, not the full agent.
 
-**Goal:** Each analyst publishes the dashboard they just built, creates a **Genie Agent** on the same
-data, pastes in a short instructions block, and asks a few questions. This is the centerpiece: it shows
+**Goal:** Each analyst creates a **Genie Agent** on the same data they just built the dashboard on,
+pastes in a short instructions block, and asks a few questions. This is the centerpiece: it shows
 how AI/BI and Genie connect, and how little it takes to get a good agent when the data is well
 documented. Best segment for the skeptic.
 
@@ -302,21 +304,20 @@ documented: every column has a description and the table relationships are defin
 knows how to join things. We just add a few instructions on top."
 
 **Do (Workbook Part 4) - everyone on their own:**
-1. **Publish** your dashboard (top-right **Publish**).
-2. Left sidebar → **Genie Agents** → **New** → select shared `fact_encounters`, `dim_provider`,
+1. Left sidebar → **Genie Agents** → **New** → select shared `fact_encounters`, `dim_provider`,
    `dim_diagnosis`, `dim_procedure`, **plus each attendee's own `analyst101_<user>.dim_facility`**
    (the Part 0 build) *instead of* the shared `dim_facility` → **Create**. **Genie Code** launches
    automatically. *(This closes the loop — their governed table becomes the facility dimension. It has
    the same `facility_id`s as the shared dim, so it joins to `fact_encounters` cleanly. Their table has
    no declared FK, so the join relies on the instruction hint — which is in the block — not auto-FK
    metadata. If someone's ETL build failed, have them use the shared `dim_facility` instead.)*
-3. In **Genie Code** (the agent's **Instructions** area), **paste the prepared instructions block**
+2. In **Genie Code** (the agent's **Instructions** area), **paste the prepared instructions block**
    (in `genie/genie_space_config.md`, also pre-shared in the Workbook). Save.
-4. Let the **attendees drive**. Have them ask a few:
+3. Let the **attendees drive**. Have them ask a few:
    - "How many encounters were there in 2024 by region?"
    - "Which providers have the highest 30-day readmission rate, with at least 200 encounters?"
    - "What is the average length of stay for a {{PROCEDURE_EXAMPLE}}?"
-5. On each answer, click **Show generated code** so they see the Databricks SQL.
+4. On each answer, click **Show generated code** so they see the Databricks SQL.
 
 **Point out (skeptic-focused):**
 - The quality comes from the **column comments and foreign keys** (already in the data) plus the short
