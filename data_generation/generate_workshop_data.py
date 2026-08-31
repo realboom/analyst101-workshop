@@ -453,7 +453,6 @@ COLUMN_COMMENTS = {
     "dim_visit_type": {
         "visit_type_id": "Primary key. Visit type code.",
         "visit_type_name": "Human-readable visit type.",
-        "is_standard": "TRUE for a standard visit type, FALSE for a non-standard one.",
     },
 }
 
