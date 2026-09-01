@@ -1,9 +1,9 @@
 # Attendee Workbook — Genie & Governed Metrics
 
 Welcome. This is the **Genie track** of Analyst 101: you'll build a **Genie Agent** on the shared
-dataset, tune it so plain-language questions resolve to the right answer (Part 4), then add the
+dataset, tune it so plain-language questions resolve to the right answer (Part 1), then add the
 **accuracy layer** — SQL functions, metric views, and trusted assets — and prove the lift with a
-**benchmark** (Parts 5–8). Follow along on your own screen, and ask questions any time. All data is
+**benchmark** (Parts 2–5). Follow along on your own screen, and ask questions any time. All data is
 synthetic — **no PHI**.
 
 ## The dataset
@@ -21,7 +21,7 @@ Everything lives in `{{CATALOG}}.{{SCHEMA}}`:
 
 ---
 
-## Part 4 - Build a Genie Agent
+## Part 1 - Build a Genie Agent
 
 Now the fun part. Here you'll build a full **Genie Agent** (this is what used to be called a "Genie space") on the shared dataset, give it a few instructions, and ask questions in plain language. *(A published AI/BI dashboard also has an **Ask Genie** box for quick questions on just that dashboard's data — the Genie Agent you build here is the full, reusable version across the whole dataset.)*
 
@@ -69,7 +69,7 @@ Conventions:
   FROM fact_encounters e JOIN dim_facility f USING (facility_id)
   GROUP BY f.facility_name HAVING COUNT(*) >= 200 ORDER BY readmit_rate_pct DESC
   ```
-  *Note the example spells out `AVG(readmitted_30d)*100` rather than referencing the `readmission_rate` expression above. An example query must be complete, runnable SQL — a SQL expression is context Genie reads, not a column/function you can name in a query. Keep the two in sync (same math). This is the opposite of the metric views / SQL functions in Parts 5–8, which **are** real objects you call by name — `MEASURE(...)` / `pcp_continuity_by_provider()`.*
+  *Note the example spells out `AVG(readmitted_30d)*100` rather than referencing the `readmission_rate` expression above. An example query must be complete, runnable SQL — a SQL expression is context Genie reads, not a column/function you can name in a query. Keep the two in sync (same math). This is the opposite of the metric views / SQL functions in Parts 2–5, which **are** real objects you call by name — `MEASURE(...)` / `pcp_continuity_by_provider()`.*
 
 > **Priority order (what Genie reads, best first):** column comments/keys → **synonyms** → **SQL expressions** (metrics/filters) → **example queries** → free-text instructions *last*. The full set is in `genie/genie_space_config.md`.
 
@@ -92,19 +92,19 @@ Conventions:
 
 # Advanced features: governed metrics & trusted assets
 
-Part 4 stood up a Genie Agent that gives *fast* answers in plain language. This half is the **accuracy layer**: making those answers *trustworthy*. It's the same arc as the Databricks Day session — the **confidence stack**, highest-confidence first:
+Part 1 stood up a Genie Agent that gives *fast* answers in plain language. This half is the **accuracy layer**: making those answers *trustworthy*. It's the same arc as the Databricks Day session — the **confidence stack**, highest-confidence first:
 
 1. **SQL functions** — deterministic, callable, audited logic.
 2. **Metric views** — one governed definition of a metric, referenced by name everywhere.
 3. **Trusted assets in Genie** — plain-language questions resolve to those governed definitions instead of ad-hoc SQL.
 
-Everything runs on the **PCP continuity** use case, already built on the shared schema. *PCP continuity = the share of a patient's **standard** visits handled by their **assigned PCP** — a real quality measure with real business rules (standard visits only; attending must equal the assigned PCP). Those rules are exactly why it needs governing.* You'll **use** the pre-built assets first (Parts 5–7), then see how to **author your own** (Part 8).
+Everything runs on the **PCP continuity** use case, already built on the shared schema. *PCP continuity = the share of a patient's **standard** visits handled by their **assigned PCP** — a real quality measure with real business rules (standard visits only; attending must equal the assigned PCP). Those rules are exactly why it needs governing.* You'll **use** the pre-built assets first (Parts 2–4), then see how to **author your own** (Part 5).
 
-## Part 5 - SQL functions: deterministic, callable logic
+## Part 2 - SQL functions: deterministic, callable logic
 
-> **Parts 5 and 6 are exploratory.** The function and metric view already exist in the shared schema — here you just *run queries against them* to see how governed assets behave. You'll build your own versions in **Part 8**.
+> **Parts 2 and 3 are exploratory.** The function and metric view already exist in the shared schema — here you just *run queries against them* to see how governed assets behave. You'll build your own versions in **Part 5**.
 
-A SQL function packages logic once, so anyone — including Genie — calls it **by name** instead of re-deriving joins. It's registered in Unity Catalog and governed (grant `EXECUTE`; callers can't see or change the logic inside — ideal for PHI-sensitive clinical rules). We use **one** function here — `pcp_continuity_by_provider()` — because it does the **provider grain the metric view can't** (the overall/facility/region ratio is covered by the metric view in Part 6). Run it in a SQL editor:
+A SQL function packages logic once, so anyone — including Genie — calls it **by name** instead of re-deriving joins. It's registered in Unity Catalog and governed (grant `EXECUTE`; callers can't see or change the logic inside — ideal for PHI-sensitive clinical rules). We use **one** function here — `pcp_continuity_by_provider()` — because it does the **provider grain the metric view can't** (the overall/facility/region ratio is covered by the metric view in Part 3). Run it in a SQL editor:
 
 ```sql
 -- table function: continuity BY PROVIDER, min 200 standard visits
@@ -117,11 +117,11 @@ ORDER BY continuity_ratio DESC;
 
 It's a **table function** — you query it like a table, but the provider-grain logic lives in one governed place, not re-derived per query. Same inputs → same result every time (**deterministic**).
 
-> **When do you reach for a function instead of the metric view?** When the question needs a **grain the metric view doesn't model**. The metric view (Part 6) rolls up by facility / region / month — it has **no provider dimension** — so *continuity by provider* is a job only the function can do. That's the clean division of labor: metric view for governed rollups, functions for the grains (and parameterized logic) it can't express.
+> **When do you reach for a function instead of the metric view?** When the question needs a **grain the metric view doesn't model**. The metric view (Part 3) rolls up by facility / region / month — it has **no provider dimension** — so *continuity by provider* is a job only the function can do. That's the clean division of labor: metric view for governed rollups, functions for the grains (and parameterized logic) it can't express.
 >
-> **A note on Genie + functions — this is a Part 7 concern, not something to set up here.** Right now (Part 5) you're just calling the function in a SQL editor, where it's fully deterministic. *Inside* Genie it behaves differently, and you'll deal with that when you build the agent in **Part 7**: Genie tends to prefer the metric view for anything it can answer that way, so adding the function (or a text instruction to use it) is **not** enough to make Genie call it. The fix, in Part 7, is to add an **example query** whose SQL calls the function (Configure → Examples → Add → Example Query) — and the **provider-grain question is where you test it**. Tested: pairing *"which providers have the lowest PCP continuity?"* to a `pcp_continuity_by_provider()` example query made Genie call the function; without it, Genie forced the question through the metric view (which has no provider dimension) and returned nothing.
+> **A note on Genie + functions — this is a Part 4 concern, not something to set up here.** Right now (Part 2) you're just calling the function in a SQL editor, where it's fully deterministic. *Inside* Genie it behaves differently, and you'll deal with that when you build the agent in **Part 4**: Genie tends to prefer the metric view for anything it can answer that way, so adding the function (or a text instruction to use it) is **not** enough to make Genie call it. The fix, in Part 4, is to add an **example query** whose SQL calls the function (Configure → Examples → Add → Example Query) — and the **provider-grain question is where you test it**. Tested: pairing *"which providers have the lowest PCP continuity?"* to a `pcp_continuity_by_provider()` example query made Genie call the function; without it, Genie forced the question through the metric view (which has no provider dimension) and returned nothing.
 
-## Part 6 - Metric views: one metric, one number
+## Part 3 - Metric views: one metric, one number
 
 A **metric view** defines a measure **once**, in Unity Catalog, so every dashboard, notebook, and Genie Agent computes it identically. `pcp_continuity_metrics` is already built. Query its measures with `MEASURE()` and group by its dimensions:
 
@@ -145,7 +145,7 @@ GROUP BY `Region` ORDER BY continuity_pct DESC;
 
 > **Why this matters (query-time grouping):** continuity is a **ratio** — it's *non-additive*, so averaging facility ratios does **not** give the regional ratio. A metric view resolves the grouping **at query time** from the underlying counts, so the number is mathematically correct at every grain. That's the trap a copy-pasted calculated field falls into — and the reason to define it once, centrally.
 
-## Part 7 - Trusted assets in Genie + the benchmark
+## Part 4 - Trusted assets in Genie + the benchmark
 
 Now wire the governed definitions into Genie so plain-language questions resolve to them.
 
@@ -238,7 +238,7 @@ The **Monitor** tab turns real usage into improvements. It logs the **actual que
 3. Scan for the misses — 👎'd answers, or rows where the generated SQL is wrong. Each miss is a curation task: promote it into the right governed context —
    - an everyday word Genie didn't map → add a **synonym**
    - a metric it recomputed by hand → point it at the **metric view** (or add a **SQL expression**)
-   - a question it should route to the function but didn't → add an **example query** (the lever from earlier in Part 7)
+   - a question it should route to the function but didn't → add an **example query** (the lever from earlier in Part 4)
    - missing governed logic → register the **trusted asset** + a routing instruction
 4. Close the loop with the **Benchmark** tab: add the fixed question as a benchmark row and **Run**, so the fix is proven and stays fixed.
 
@@ -246,9 +246,9 @@ The **Monitor** tab turns real usage into improvements. It logs the **actual que
 
 > **The loop:** **Monitor** tells you *what to fix* → a trusted asset / instruction / example query *fixes it* → the **Benchmark** *proves it stayed fixed*. That's how a Genie Agent matures from "demo" to "trusted."
 
-## Part 8 - Author your own metric view & function *(extra exercise, if time)*
+## Part 5 - Author your own metric view & function *(extra exercise, if time)*
 
-You've *used* the governed assets in Parts 5–7 — now **build them yourself** to get hands-on with authoring metric views and SQL functions. You'll re-create the two you saw: the `pcp_continuity_metrics` metric view and the `pcp_continuity_by_provider` function. Build them in **`{{CATALOG}}.analyst101_<you>`** (your own schema), reading the shared **synthetic** base data you have SELECT on. Same steps, same syntax you'll use to stand up metric views and functions on your **own** data back home — this is the reps, on safe data.
+You've *used* the governed assets in Parts 2–4 — now **build them yourself** to get hands-on with authoring metric views and SQL functions. You'll re-create the two you saw: the `pcp_continuity_metrics` metric view and the `pcp_continuity_by_provider` function. Build them in **`{{CATALOG}}.analyst101_<you>`** (your own schema), reading the shared **synthetic** base data you have SELECT on. Same steps, same syntax you'll use to stand up metric views and functions on your **own** data back home — this is the reps, on safe data.
 
 > **Don't have your own schema yet?** Create one first — left nav → **Catalog** → click the catalog **`{{CATALOG}}`** → **Create schema** (top-right) → name it **`analyst101_<you>`** (e.g. `analyst101_jsmith`), leave the default storage location, **Create**. *(If **Create schema** is greyed out, tell your instructor — the workshop group needs `CREATE SCHEMA` on `{{CATALOG}}`.)*
 
@@ -322,7 +322,7 @@ FROM {{CATALOG}}.analyst101_<you>.pcp_continuity_by_provider()
 WHERE standard_visits >= 200 ORDER BY continuity_ratio DESC;
 ```
 
-Grant `EXECUTE` to your Genie users, register these as trusted assets, and add an example query so Genie calls the function (Part 5's note) — and you've rebuilt the whole confidence stack on your own. *(The full reference DDL, including the `encounters_enriched` view, is in `advanced_module/continuity_assets.sql`.)*
+Grant `EXECUTE` to your Genie users, register these as trusted assets, and add an example query so Genie calls the function (Part 2's note) — and you've rebuilt the whole confidence stack on your own. *(The full reference DDL, including the `encounters_enriched` view, is in `advanced_module/continuity_assets.sql`.)*
 
 ---
 
@@ -353,6 +353,6 @@ This is your **leave-behind**. The workshop used synthetic data so you could lea
 - A filter and cross-filtering between two widgets.
 - A drill-down hierarchy.
 - A Genie question with the SQL revealed.
-- A governed **metric view** for your headline number (the Part 8 pattern, on your data).
+- A governed **metric view** for your headline number (the Part 5 pattern, on your data).
 
 **Before you leave, jot down** your first move back home: the dashboard or Genie Agent you'll build, the tables it needs, and the one metric worth governing first.
