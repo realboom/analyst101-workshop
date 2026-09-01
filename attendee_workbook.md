@@ -54,13 +54,11 @@ That's it. Everywhere below where it says "add a table" or "add a combo chart," 
 
 ---
 
-# DAY 1
-
 > **Single-session Analyst 101?** Follow `agenda.md`: you'll do **Part 0** (ETL) plus **Parts 1–3**
-> below and the **Genie** segment. The "Day 1 / Day 2" split here is the fuller two-day layout — use
-> it if you have the time.
+> below and the **Genie** segment. **Parts 5–8** are the fuller advanced layout — use them if you
+> have the time.
 
-> **Capabilities we will cover today:** the no-code medallion ETL build (Part 0), then rich interactive visuals (combo, heatmap, map, pivot, scorecard), calculated dimensions and measures, parameterized widgets, cross-filtering, drilling, forecasting and AI functions, multipage reporting, and Ask Genie from a published dashboard. The companion one-pager has a quick reference for each.
+> **Capabilities we will cover:** the no-code medallion ETL build (Part 0), then rich interactive visuals (combo, heatmap, map, pivot, scorecard), calculated dimensions and measures, parameterized widgets, cross-filtering, drilling, forecasting and AI functions, multipage reporting, and Ask Genie from a published dashboard. The companion one-pager has a quick reference for each.
 
 ## Part 0 · Foundations & ETL — from a raw file to a governed table
 
@@ -421,7 +419,7 @@ Conventions:
   FROM fact_encounters e JOIN dim_facility f USING (facility_id)
   GROUP BY f.facility_name HAVING COUNT(*) >= 200 ORDER BY readmit_rate_pct DESC
   ```
-  *Note the example spells out `AVG(readmitted_30d)*100` rather than referencing the `readmission_rate` expression above. An example query must be complete, runnable SQL — a SQL expression is context Genie reads, not a column/function you can name in a query. Keep the two in sync (same math). This is the opposite of metric views / SQL functions on Day 2, which **are** real objects you call by name — `MEASURE(...)` / `pcp_continuity_by_provider()`.*
+  *Note the example spells out `AVG(readmitted_30d)*100` rather than referencing the `readmission_rate` expression above. An example query must be complete, runnable SQL — a SQL expression is context Genie reads, not a column/function you can name in a query. Keep the two in sync (same math). This is the opposite of the metric views / SQL functions in Parts 5–8, which **are** real objects you call by name — `MEASURE(...)` / `pcp_continuity_by_provider()`.*
 
 > **Priority order (what Genie reads, best first):** column comments/keys → **synonyms** → **SQL expressions** (metrics/filters) → **example queries** → free-text instructions *last*. The full set is in `genie/genie_space_config.md`.
 
@@ -442,9 +440,9 @@ Conventions:
 
 ---
 
-# DAY 2 - Advanced features: governed metrics & trusted assets
+# Advanced features: governed metrics & trusted assets
 
-Day 1 took you from a raw file to dashboards and a Genie Agent — *fast* answers. Day 2 is the **accuracy layer**: making answers *trustworthy*. It's the same arc as the Databricks Day session — the **confidence stack**, highest-confidence first:
+Parts 0–4 took you from a raw file to dashboards and a Genie Agent — *fast* answers. This half is the **accuracy layer**: making answers *trustworthy*. It's the same arc as the Databricks Day session — the **confidence stack**, highest-confidence first:
 
 1. **SQL functions** — deterministic, callable, audited logic.
 2. **Metric views** — one governed definition of a metric, referenced by name everywhere.
