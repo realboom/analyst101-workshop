@@ -23,17 +23,13 @@ Everything lives in `{{CATALOG}}.{{SCHEMA}}`:
 
 ## Part 4 - Build a Genie Agent
 
-Now the fun part. Your dashboard is published — and a published dashboard already has an **Ask Genie** box at the bottom for quick questions on just that data. Here you'll build the full **Genie Agent** (this is what used to be called a "Genie space") on the same data, give it a few instructions, and ask questions in plain language.
+Now the fun part. Here you'll build a full **Genie Agent** (this is what used to be called a "Genie space") on the shared dataset, give it a few instructions, and ask questions in plain language. *(A published AI/BI dashboard also has an **Ask Genie** box for quick questions on just that dashboard's data — the Genie Agent you build here is the full, reusable version across the whole dataset.)*
 
-**Step 1 · Create a Genie Agent — on the shared tables (plus your own `dim_facility`, if you built one).**
+**Step 1 · Create a Genie Agent — on the shared tables.**
 
 - In the left sidebar, click **Genie Agents** → **New** (top-right). *(If your workspace still says "Genie" / "Genie spaces," it's the same thing.)*
-- Add these **data sources** (click **+ Add data** / the table picker):
-  1. From the **shared** schema `{{CATALOG}}.{{SCHEMA}}`: **`fact_encounters`**, **`dim_provider`**, **`dim_diagnosis`**, **`dim_procedure`**.
-  2. **`dim_facility`** — use the **shared** `{{CATALOG}}.{{SCHEMA}}.dim_facility`. **⭐ If you built your own in Part 0**, add **`{{CATALOG}}.analyst101_<you>.dim_facility`** instead (and **don't** also add the shared one) — it has the same 12 facilities and `facility_id`s, so either one joins to `fact_encounters` cleanly.
+- Add these **data sources** (click **+ Add data** / the table picker), all from the **shared** schema `{{CATALOG}}.{{SCHEMA}}`: **`fact_encounters`**, **`dim_provider`**, **`dim_facility`**, **`dim_diagnosis`**, **`dim_procedure`**.
 - Click **Create**. **Genie Code** launches automatically — that's where you add instructions and trusted assets.
-
-> **If you used your own `dim_facility`, this closes the loop:** the raw file you cleaned into a governed table back in Part 0 is now the facility dimension powering your Genie Agent — ask a facility- or region-level question (below) and Genie answers straight off *your* table.
 
 **Step 2 · Add instructions.**
 
@@ -50,7 +46,7 @@ Conventions:
 - Show plain-language names in results (provider_name, facility_name, region, clinical_category,
   procedure_description), not the id columns.
 ```
-> *Why no "data model / joins" here:* the shared tables' joins are already declared as foreign keys, and the example query (Step 3) shows the `dim_facility` join — so restating joins in prose is redundant. Text instructions are a last resort; relationships and examples are more reliable. The only non-declared join (shared `fact_encounters` → your own `dim_facility`) is covered by the example query + your PK from Part 0 Step 6; if a facility question ever misses, define it as an explicit **relationship** in Genie Code, not in text.
+> *Why no "data model / joins" here:* the shared tables' joins are already declared as foreign keys — so restating joins in prose is redundant. Text instructions are a last resort; relationships and examples are more reliable. If a join ever misses, define it as an explicit **relationship** in Genie Code, not in text.
 
 **Step 3 · Add SQL-based context — this is what really tunes Genie.** Free text is the *last* resort; **SQL-based context is more reliable**. Add a few high-value pieces in Genie Code (the same levers Databricks Day goes deep on):
 
@@ -79,14 +75,14 @@ Conventions:
 
 **Step 4 · Ask a few questions.** Try these, then your own:
 
-- "How many encounters were there in 2024 by region?" — *`region` comes from the `dim_facility` you built.*
+- "How many encounters were there in 2024 by region?" — *`region` comes from `dim_facility`.*
 - "Which **doctors** have the highest 30-day readmission rate, with at least 200 encounters?" — *exercises your `doctor` → `provider_name` synonym.*
-- "Which facilities have the highest 30-day readmission rate, with at least 200 encounters?" — *your `dim_facility` + the example query you just added.*
+- "Which facilities have the highest 30-day readmission rate, with at least 200 encounters?" — *the `dim_facility` join + the example query you just added.*
 - "What is the average length of stay for a {{PROCEDURE_EXAMPLE}}?"
 
-**Step 5 · Show the SQL.** On any answer, click **Show generated code** to see the Databricks SQL Genie wrote — for the facility/region questions you'll see it joining `fact_encounters` to *your* `analyst101_<you>.dim_facility`.
+**Step 5 · Show the SQL.** On any answer, click **Show generated code** to see the Databricks SQL Genie wrote — for the facility/region questions you'll see it joining `fact_encounters` to `dim_facility`.
 
-> **Why this works — the setup drives the answer.** Genie's quality comes from the *setup*, not clever prompting. The context it reads is: **well-annotated tables** (every column commented), **explicit joins and keys**, and a **tight scope** (≤5 well-modeled tables — the shared ones plus your `dim_facility`). That's why the shared tables just work — and it's exactly why you annotated your own `dim_facility` in **Part 0, Step 6**. Curated, documented tables beat raw wide ones. *(This is the Databricks Day theme — "maturing Genie": engineer accuracy into the setup, then pin the known-good answers.)*
+> **Why this works — the setup drives the answer.** Genie's quality comes from the *setup*, not clever prompting. The context it reads is: **well-annotated tables** (every column commented), **explicit joins and keys**, and a **tight scope** (≤5 well-modeled tables). That's why the shared tables just work — curated, documented tables beat raw wide ones. *(This is the Databricks Day theme — "maturing Genie": engineer accuracy into the setup, then pin the known-good answers.)*
 >
 > **For the SQL folks:** Genie writes Databricks SQL, so it's a fast way to see the correct syntax and functions when you translate from what you write today. Copy it and build on it.
 >
@@ -96,7 +92,7 @@ Conventions:
 
 # Advanced features: governed metrics & trusted assets
 
-Parts 0–4 took you from a raw file to dashboards and a Genie Agent — *fast* answers. This half is the **accuracy layer**: making answers *trustworthy*. It's the same arc as the Databricks Day session — the **confidence stack**, highest-confidence first:
+Part 4 stood up a Genie Agent that gives *fast* answers in plain language. This half is the **accuracy layer**: making those answers *trustworthy*. It's the same arc as the Databricks Day session — the **confidence stack**, highest-confidence first:
 
 1. **SQL functions** — deterministic, callable, audited logic.
 2. **Metric views** — one governed definition of a metric, referenced by name everywhere.
@@ -254,7 +250,7 @@ The **Monitor** tab turns real usage into improvements. It logs the **actual que
 
 You've *used* the governed assets in Parts 5–7 — now **build them yourself** to get hands-on with authoring metric views and SQL functions. You'll re-create the two you saw: the `pcp_continuity_metrics` metric view and the `pcp_continuity_by_provider` function. Build them in **`{{CATALOG}}.analyst101_<you>`** (your own schema), reading the shared **synthetic** base data you have SELECT on. Same steps, same syntax you'll use to stand up metric views and functions on your **own** data back home — this is the reps, on safe data.
 
-> **Don't have your own schema yet?** If you skipped Part 0, create it first — left nav → **Catalog** → click the catalog **`{{CATALOG}}`** → **Create schema** (top-right) → name it **`analyst101_<you>`** (e.g. `analyst101_jsmith`), leave the default storage location, **Create**. *(If **Create schema** is greyed out, tell your instructor — the workshop group needs `CREATE SCHEMA` on `{{CATALOG}}`.)*
+> **Don't have your own schema yet?** Create one first — left nav → **Catalog** → click the catalog **`{{CATALOG}}`** → **Create schema** (top-right) → name it **`analyst101_<you>`** (e.g. `analyst101_jsmith`), leave the default storage location, **Create**. *(If **Create schema** is greyed out, tell your instructor — the workshop group needs `CREATE SCHEMA` on `{{CATALOG}}`.)*
 
 **1 · The metric view — one governed definition.** A metric view's `source` is a single relation, so continuity sources the shared **`encounters_enriched`** convenience view (one row per encounter with `visit_type_id` and an `is_pcp_match` flag already computed; standard visits are `visit_type_id = 'OFFICE'`). Run this in a SQL editor:
 
