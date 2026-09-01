@@ -192,13 +192,16 @@ A benchmark is a set of *question → expected-SQL* pairs. On **Run**, Genie ans
    - Question: `Which facilities have the lowest PCP continuity, and how many standard visits do they have?`
    - SQL:
      ```sql
-     SELECT `Facility`, `Facility Code`, `Region`,
-            MEASURE(`Total Standard Visits`) AS total_standard_visits,
-            MEASURE(`PCP Continuity Ratio`)  AS pcp_continuity_ratio
-     FROM {{CATALOG}}.{{SCHEMA}}.pcp_continuity_metrics
-     GROUP BY ALL
-     ORDER BY pcp_continuity_ratio ASC
-     LIMIT 10
+     SELECT
+       `Facility`,
+       MEASURE(`PCP Continuity Ratio`) AS pcp_continuity_ratio,
+       MEASURE(`Total Standard Visits`) AS total_standard_visits
+     FROM
+       {{CATALOG}}.{{SCHEMA}}.pcp_continuity_metrics
+     GROUP BY
+       `Facility`
+     ORDER BY
+       pcp_continuity_ratio ASC
      ```
 
    **Benchmark 2 — "share of visits with the PCP"**
