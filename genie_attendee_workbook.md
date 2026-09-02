@@ -204,6 +204,8 @@ A benchmark is a set of *question → expected-SQL* pairs. On **Run**, Genie ans
        pcp_continuity_ratio ASC
      ```
 
+   > **Expect Benchmark 1 to score _Bad_ — and that's the point.** "Which facilities have the **lowest**…" reads as a *top-N*, so Genie adds an `ORDER BY … LIMIT` and returns just the bottom few; your ground truth returns **all 12**. The scorer compares result sets exactly, so a different **shape** = Bad — even though every continuity value Genie returned is the **governed 76.3%-definition** number. This is a *shape/intent* mismatch, **not** a governance break: the metric is pinned, only the row count differs. The takeaway — benchmark scoring is strict exact-match, so your ground-truth SQL has to encode the answer *shape* you mean, and a fuzzy superlative like "lowest" forces you to decide what "the answer" is (all facilities ranked, or just the bottom N?). Benchmarks 2 and 3 below score **Good** — that's where you prove the phrasing drift on *the number* is gone.
+
    **Benchmark 2 — "share of visits with the PCP"**
    - Question: `What share of visits are with the patient's PCP?`
    - SQL:
