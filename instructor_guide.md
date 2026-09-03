@@ -346,8 +346,9 @@ both agents); use these, not a strawman:
 **What synonyms do — and don't — show here (say so if asked):** synonyms for well-named columns
 ("LOS" → `length_of_stay_days`, "bounce-back" → `readmitted_30d`) **don't change the answer** — the
 bare agent maps those from the column name + comment. What *does* change (and what the workbook's
-synonym demo hangs on): asked cold, Genie **hedges the interpretation** — *"I interpreted bounce-back
-rate as the 30-day readmission rate…"*; pinning the synonym removes that guess. So frame it as
+synonym demo hangs on): asked cold, Genie **may hedge the interpretation** — *"I interpreted
+bounce-back rate as the 30-day readmission rate…"* (non-deterministic — it may or may not surface that
+caveat); pinning the synonym makes it a defined mapping, so there's no guess left to hedge. So frame it as
 **governance, not capability** — a pinned mapping no one downstream has to trust an inference on — not
 "watch it fail." On a real, cryptic schema (`PROV_RNDR_NPI`, `DSCHG_DISP_CD`) synonyms would earn
 their keep on the **answer** too; here they earn it on the **caveat**. And the ≥200-encounter floor is
