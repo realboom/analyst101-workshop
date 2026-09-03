@@ -51,14 +51,17 @@ Conventions:
 
 **Step 3 · Add SQL-based context — this is what really tunes Genie Agent.** Free text is the *last* resort; **SQL-based context is more reliable**.
 
-- **Synonyms** — map everyday words to a **column** (synonyms attach to columns, not tables). In the **Configuration** → the data source → **Edit column metadata** → pick the column → **Synonyms** field. Add each of these:
-  - `dim_provider.provider_name` ← **doctor**, **physician**
-  - `dim_facility.facility_name` ← **hospital**, **clinic**, **site**
-  - `fact_encounters.length_of_stay_days` ← **LOS**, **length of stay**
-  - `fact_encounters.readmitted_30d` ← **readmission**, **readmit**, **bounce-back**
-  - `fact_encounters.total_paid` ← **reimbursement**, **amount paid**
+- **Synonyms** — map jargon and abbreviations to a **column** (synonyms attach to columns, not tables).
+  - **First, ask it cold — before you add any synonym:** *"Which providers have the highest bounce-back rate, with at least 200 encounters?"* Genie still answers — but watch it **flag the guess**: *"I interpreted bounce-back rate as the 30-day readmission rate…"* It's inferring `bounce-back` → `readmitted_30d` and telling you it's inferring. Fine for one analyst who reads the caveat; risky once the whole org trusts the number.
+  - **Now pin it.** In the **Configuration** → the data source → **Edit column metadata** → pick the column → **Synonyms** field. Add each of these:
+    - `dim_provider.provider_name` ← **doctor**, **physician**
+    - `dim_facility.facility_name` ← **hospital**, **clinic**, **site**
+    - `fact_encounters.length_of_stay_days` ← **LOS**, **length of stay**
+    - `fact_encounters.readmitted_30d` ← **readmission**, **readmit**, **bounce-back**
+    - `fact_encounters.total_paid` ← **reimbursement**, **amount paid**
+  - **Ask the same question again** — the caveat is gone: `bounce-back` is now a known mapping, not a guess. Everyday words like *"which doctors have the most encounters?"* and *"average LOS by hospital"* resolve too, without anyone knowing the column names.
 
-  Now *"which doctors have the most encounters?"* and *"average LOS by hospital"* resolve without anyone knowing the column names.
+  > **Synonyms aren't for words Genie already knows** — it maps "doctor" → `provider_name` on its own. They're for **jargon and abbreviations** an LLM would otherwise *guess* at ("bounce-back," internal acronyms). The win usually isn't a different answer — it's the **same answer with the guesswork (and the caveat) removed**, so no one downstream is trusting an inference.
 - **SQL expressions** — reusable, named metrics/filters. In the **Configuration** → the agent's **Instructions** → **add a SQL expression**; for each, give a **name**, paste the **SQL**, and mark it a *measure* or *filter*. Add:
   - measure **`readmission_rate`** = `AVG(readmitted_30d) * 100`
   - filter **`inpatient_only`** = `encounter_type = 'Inpatient'`
@@ -77,7 +80,7 @@ Conventions:
 **Step 4 · Ask a few questions.** Try these, then your own:
 
 - "How many encounters were there in 2024 by region?" — *`region` comes from `dim_facility`.*
-- "Which **doctors** have the highest 30-day readmission rate, with at least 200 encounters?" — *exercises your `doctor` → `provider_name` synonym.*
+- "Which **providers** have the highest bounce-back rate, with at least 200 encounters?" — *the Step 3 question again — no caveat now that `bounce-back` is pinned.*
 - "Which facilities have the highest 30-day readmission rate, with at least 200 encounters?" — *the `dim_facility` join + the example query you just added.*
 - "What is the average length of stay for a {{PROCEDURE_EXAMPLE}}?"
 

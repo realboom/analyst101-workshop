@@ -343,11 +343,16 @@ both agents); use these, not a strawman:
 | **"Which facilities are the most expensive?"** | *hedges* — picks `SUM(total_charges)`, then asks "average per encounter instead?" (ambiguous: total vs average, charges vs paid) | **decisive** — `AVG(total_charges)` per encounter, rounded, ranked, clean $ answer | tuning **resolves ambiguity** → a confident, consistent answer. The strongest live contrast. |
 | **Same metric asked a few ways** ("bounce-back rate by facility", "highest readmission doctors") | understands the terms, but the **shape varies** — raw fractions (`0.1255`), `SUM` vs `AVG`, sometimes a single `RANK()=1` row | consistent governed shape every time — `AVG(...)*100`, one decimal, `HAVING COUNT(*)>=200`, clean ranked list | **consistency** across phrasings — deck **slide 6** ("same question, different SQL on different days") |
 
-**What does *not* show a contrast here (say so if asked):** synonyms for well-named columns ("LOS" →
-`length_of_stay_days`, "bounce-back" → `readmitted_30d`) — the bare agent maps those from the column
-name + comment. And the ≥200-encounter floor is a **no-op** on this data (every provider has 271+
-encounters), so it never changes a ranking. On a real, cryptic schema (`PROV_RNDR_NPI`,
-`DSCHG_DISP_CD`) synonyms earn their keep; here they don't. That honesty *is* the credibility.
+**What synonyms do — and don't — show here (say so if asked):** synonyms for well-named columns
+("LOS" → `length_of_stay_days`, "bounce-back" → `readmitted_30d`) **don't change the answer** — the
+bare agent maps those from the column name + comment. What *does* change (and what the workbook's
+synonym demo hangs on): asked cold, Genie **hedges the interpretation** — *"I interpreted bounce-back
+rate as the 30-day readmission rate…"*; pinning the synonym removes that guess. So frame it as
+**governance, not capability** — a pinned mapping no one downstream has to trust an inference on — not
+"watch it fail." On a real, cryptic schema (`PROV_RNDR_NPI`, `DSCHG_DISP_CD`) synonyms would earn
+their keep on the **answer** too; here they earn it on the **caveat**. And the ≥200-encounter floor is
+a **no-op** on this data (every provider has 271+ encounters), so it never changes a ranking. That
+honesty *is* the credibility.
 
 **A nice tell:** the tuned agent's SQL visibly carries the **example query's house style** —
 `ROUND(...*100,1)` and `HAVING COUNT(*)>=200` show up even where not strictly needed — and it joined to
