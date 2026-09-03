@@ -29,11 +29,12 @@ Now the fun part. Here you'll build a full **Genie Agent** (this is what used to
 
 - In the left sidebar, click **Genie Agents** → **New** (top-right). *(If your workspace still says "Genie" / "Genie spaces," it's the same thing.)*
 - Add these **data sources** (click **+ Add data** / the table picker), all from the **shared** schema `{{CATALOG}}.{{SCHEMA}}`: **`fact_encounters`**, **`dim_provider`**, **`dim_facility`**, **`dim_diagnosis`**, **`dim_procedure`**.
-- Click **Create**. **Genie Code** launches automatically — that's where you add instructions and trusted assets.
+- Click **Create**. Your Genie Agent is created — you'll add instructions and trusted assets in its **Configuration** next.
 
 **Step 2 · Add instructions.**
 
-- In **Genie Code** (the agent's **Instructions** area), paste the block below (your instructor also shares it). Save.
+- Click **Configure** (top-right of the Genie Agent) to open the agent's **Configuration**.
+- In the **Configuration** (the agent's **Instructions** area), paste the block below (your instructor also shares it). Save.
 
 Instructions block to paste (scope + conventions only — no join prose: relationships and the example query carry the joins):
 ```
@@ -46,11 +47,11 @@ Conventions:
 - Show plain-language names in results (provider_name, facility_name, region, clinical_category,
   procedure_description), not the id columns.
 ```
-> *Why no "data model / joins" here:* the shared tables' joins are already declared as foreign keys — so restating joins in prose is redundant. Text instructions are a last resort; relationships and examples are more reliable. If a join ever misses, define it as an explicit **relationship** in Genie Code, not in text.
+> *Why no "data model / joins" here:* the shared tables' joins are already declared as foreign keys — so restating joins in prose is redundant. Text instructions are a last resort; relationships and examples are more reliable. If a join ever misses, define it as an explicit **relationship** in the **Configuration**, not in text.
 
-**Step 3 · Add SQL-based context — this is what really tunes Genie.** Free text is the *last* resort; **SQL-based context is more reliable**. Add a few high-value pieces in Genie Code (the same levers Databricks Day goes deep on):
+**Step 3 · Add SQL-based context — this is what really tunes Genie Agent.** Free text is the *last* resort; **SQL-based context is more reliable**.
 
-- **Synonyms** — map everyday words to a **column** (synonyms attach to columns, not tables). In Genie Code → the data source → **Edit column metadata** → pick the column → **Synonyms** field. Add each of these:
+- **Synonyms** — map everyday words to a **column** (synonyms attach to columns, not tables). In the **Configuration** → the data source → **Edit column metadata** → pick the column → **Synonyms** field. Add each of these:
   - `dim_provider.provider_name` ← **doctor**, **physician**
   - `dim_facility.facility_name` ← **hospital**, **clinic**, **site**
   - `fact_encounters.length_of_stay_days` ← **LOS**, **length of stay**
@@ -58,7 +59,7 @@ Conventions:
   - `fact_encounters.total_paid` ← **reimbursement**, **amount paid**
 
   Now *"which doctors have the most encounters?"* and *"average LOS by hospital"* resolve without anyone knowing the column names.
-- **SQL expressions** — reusable, named metrics/filters. In Genie Code → the agent's **Instructions** → **add a SQL expression**; for each, give a **name**, paste the **SQL**, and mark it a *measure* or *filter*. Add:
+- **SQL expressions** — reusable, named metrics/filters. In the **Configuration** → the agent's **Instructions** → **add a SQL expression**; for each, give a **name**, paste the **SQL**, and mark it a *measure* or *filter*. Add:
   - measure **`readmission_rate`** = `AVG(readmitted_30d) * 100`
   - filter **`inpatient_only`** = `encounter_type = 'Inpatient'`
 

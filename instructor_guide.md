@@ -305,12 +305,13 @@ knows how to join things. We just add a few instructions on top."
 
 **Do (Workbook Part 4) - everyone on their own:**
 1. Left sidebar → **Genie Agents** → **New** → select shared `fact_encounters`, `dim_provider`,
-   `dim_diagnosis`, `dim_procedure`, and the shared **`dim_facility`** → **Create**. **Genie Code**
-   launches automatically. *(If an attendee built their own `analyst101_<user>.dim_facility` in Part 0,
+   `dim_diagnosis`, `dim_procedure`, and the shared **`dim_facility`** → **Create**. The Genie Agent is
+   created — instructions and trusted assets go in its **Configuration** (**Configure**, top-right).
+   *(If an attendee built their own `analyst101_<user>.dim_facility` in Part 0,
    have them add **that** one instead of the shared `dim_facility` — it has the same `facility_id`s, so
    it joins to `fact_encounters` cleanly, and it closes the loop from their ETL build. Their own table
    has no declared FK, so that join relies on the instruction hint in the block, not auto-FK metadata.)*
-2. In **Genie Code** (the agent's **Instructions** area), **paste the prepared instructions block**
+2. Click **Configure** (top-right) → in the **Configuration** (the agent's **Instructions** area), **paste the prepared instructions block**
    (in `genie/genie_space_config.md`, also pre-shared in the Workbook). Save.
 3. Let the **attendees drive**. Have them ask a few:
    - "How many encounters were there in 2024 by region?"
@@ -443,7 +444,7 @@ Tableau-heavy attendees — anchor the metric view to "published data source, bu
 > gives 76.3% for "continuity rate" but **65.5%** for "share of visits with the patient's PCP" (counts
 > all visit types — the standard-visits rule isn't in the data, only in the governed assets) — the
 > phrasing-variance contrast is real. **Still verify the inferred
-> UI labels live:** the **trusted assets** location in Genie Code, the **"Trusted" badge**,
+> UI labels live:** the **trusted assets** location in the **Configuration**, the **"Trusted" badge**,
 > **Catalog Explorer → Create → Metric view** AI-assisted authoring, and the **Monitoring** /
 > **Benchmarks** tab labels + flow — fix any that drift.
 
