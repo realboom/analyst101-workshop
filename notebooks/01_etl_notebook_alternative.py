@@ -36,7 +36,7 @@ SCHEMA  = dbutils.widgets.get("schema").strip()
 PROFILE = dbutils.widgets.get("profile").strip()
 
 csv_path = f"/Volumes/{CATALOG}/{SCHEMA}/landing/facilities_raw.{PROFILE}.csv"
-target   = f"{CATALOG}.{SCHEMA}.dim_facility"
+target   = f"`{CATALOG}`.`{SCHEMA}`.dim_facility"
 print("Reading CSV from :", csv_path)
 print("Will write table :", target)
 

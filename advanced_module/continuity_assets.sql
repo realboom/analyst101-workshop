@@ -47,7 +47,7 @@ WITH METRICS
 LANGUAGE YAML
 AS $yaml$
 version: 0.1
-source: {{CATALOG}}.{{SCHEMA}}.encounters_enriched
+source: "{{CATALOG}}.{{SCHEMA}}.encounters_enriched"
 filter: visit_type_id = 'OFFICE'
 dimensions:
   - name: Facility

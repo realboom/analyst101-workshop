@@ -73,7 +73,11 @@ if not WAREHOUSE:
 
 ME = w.current_user.me().user_name
 PARENT = f"/Workspace/Users/{ME}"
-FQ = lambda obj: f"{CATALOG}.{SCHEMA}.{obj}"
+# Backtick-quoted names for SQL (catalogs like `dev-training` have hyphens); plain names for
+# Genie table/function identifiers, which use the unquoted catalog.schema.object form.
+QCATALOG, QSCHEMA = f"`{CATALOG}`", f"`{SCHEMA}`"
+FQ = lambda obj: f"{QCATALOG}.{QSCHEMA}.{obj}"
+FQ_ID = lambda obj: f"{CATALOG}.{SCHEMA}.{obj}"
 
 print(f"Catalog.Schema : {CATALOG}.{SCHEMA}")
 print(f"Profile        : {PROFILE}   (headline surgery: {PROC_EX} = {PROC_CODE})")
@@ -103,7 +107,7 @@ result = dbutils.notebook.run(
 )
 print("Generator finished:", result)
 print("\nTables now in the schema:")
-display(spark.sql(f"SHOW TABLES IN {CATALOG}.{SCHEMA}"))
+display(spark.sql(f"SHOW TABLES IN {QCATALOG}.{QSCHEMA}"))
 
 # COMMAND ----------
 
@@ -144,7 +148,7 @@ def split_sql(text):
     return stmts
 
 with open("../advanced_module/continuity_assets.sql") as f:
-    sql_text = f.read().replace("{{CATALOG}}", CATALOG).replace("{{SCHEMA}}", SCHEMA)
+    sql_text = f.read().replace("{{CATALOG}}", QCATALOG).replace("{{SCHEMA}}", QSCHEMA)
 
 for stmt in split_sql(sql_text):
     label = " ".join(stmt.split())[:70]
@@ -167,7 +171,7 @@ import json
 
 with open("../dashboard/workshop.lvdash.json") as f:
     dash = f.read()
-for tok, val in {"{{CATALOG}}": CATALOG, "{{SCHEMA}}": SCHEMA,
+for tok, val in {"{{CATALOG}}": QCATALOG, "{{SCHEMA}}": QSCHEMA,
                  "{{PROCEDURE_EXAMPLE}}": PROC_EX, "{{PROCEDURE_CODE}}": PROC_CODE}.items():
     dash = dash.replace(tok, val)
 
@@ -227,10 +231,10 @@ Conventions:
 - "{PROC_EX}" means primary_procedure_code = '{PROC_CODE}'.
 - Round rates to one decimal place and currency to whole dollars."""
 
-tables = sorted([FQ(o) for o in ["fact_encounters", "dim_patient", "dim_provider", "dim_facility",
+tables = sorted([FQ_ID(o) for o in ["fact_encounters", "dim_patient", "dim_provider", "dim_facility",
                                  "dim_visit_type", "dim_diagnosis", "dim_procedure",
                                  "encounters_enriched", "pcp_continuity_metrics"]])
-functions = sorted(([{"id": _id(), "identifier": FQ(fn)}
+functions = sorted(([{"id": _id(), "identifier": FQ_ID(fn)}
                      for fn in ["pcp_continuity_ratio", "pcp_continuity_by_provider", "standard_visit_count"]]),
                    key=lambda x: (x["id"], x["identifier"]))
 questions = [
@@ -284,9 +288,9 @@ if not principals:
     print("No attendee group/emails set — skipping grants (fine for a solo rehearsal).")
 for principal in principals:
     try:
-        for g in [f"GRANT USE CATALOG ON CATALOG {CATALOG} TO `{principal}`",
-                  f"GRANT CREATE SCHEMA ON CATALOG {CATALOG} TO `{principal}`",
-                  f"GRANT USE SCHEMA, SELECT ON SCHEMA {CATALOG}.{SCHEMA} TO `{principal}`"]:
+        for g in [f"GRANT USE CATALOG ON CATALOG {QCATALOG} TO `{principal}`",
+                  f"GRANT CREATE SCHEMA ON CATALOG {QCATALOG} TO `{principal}`",
+                  f"GRANT USE SCHEMA, SELECT ON SCHEMA {QCATALOG}.{QSCHEMA} TO `{principal}`"]:
             spark.sql(g); print("✅", g)
     except Exception as e:
         print(f"⚠️  '{principal}' — {str(e).splitlines()[0]}")
